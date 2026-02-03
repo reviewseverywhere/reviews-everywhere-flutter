@@ -1,0 +1,115 @@
+You are working inside as super expert of Flutter project (Reviews Everywhere) imported from GitHub. Your ONLY goal now is to audit and fix the authentication flow according to this specification:
+
+GOAL AUTH FLOW
+
+1. Shopify is the billing and entitlement authority.
+2. Firebase Auth is the identity and login system inside the app.
+3. Users sign in with:
+
+   * Email + Password (Firebase)
+   * Password reset email (Firebase)
+   * Google OAuth (Firebase) optional if configured
+   * Facebook OAuth (Firebase) optional if configured
+4. A user becomes eligible to log in only if they have a valid Shopify purchase (entitlement).
+5. Webhooks from Shopify go to Firebase (Cloud Functions). The webhook should:
+
+   * Verify order/payment status
+   * Resolve the customer email
+   * Create or activate the Firebase user record tied to that email
+   * Create/update a user profile record in Firestore with entitlement metadata
+   * DO NOT require Shopify password for login
+
+CRITICAL CLARIFICATION
+
+* Shopify does NOT provide a usable password to log into the app.
+* “Forgot password” is the correct first-time access path: Firebase sends a password setup/reset email.
+* The app must handle the case where a user exists in Firebase but is inactive, and must be activated automatically after a verified Shopify transaction.
+
+TASKS
+A) Codebase discovery
+
+1. Find all auth-related code:
+
+   * lib/ (sign in UI, auth service, routing)
+   * functions/ (Shopify webhook handlers, user provisioning, entitlement writes)
+2. Provide a short list of the exact files you will modify before changing anything.
+
+B) Identify current broken assumptions
+
+1. Search for any logic that assumes Shopify password, Shopify login, Shopify auth tokens for user login, or customer password retrieval.
+2. Remove or refactor these assumptions to the correct flow:
+
+   * Login is Firebase email/password
+   * Shopify is only used to validate entitlement
+
+C) Implement correct user gating (entitlement check)
+
+1. On login attempt (email/password), enforce:
+
+   * User must exist in Firebase Auth
+   * Firestore profile must show active entitlement (based on Shopify webhook sync)
+2. If not entitled:
+
+   * Show a clear error: “No active plan found for this email. Please purchase first or contact support.”
+3. This gating must NOT rely on client calling Shopify directly.
+4. The source of truth is Firestore entitlement field updated by Cloud Functions.
+
+D) Fix password reset / first-time setup
+
+1. Ensure “Forgot password?” triggers Firebase Auth password reset email.
+2. Confirm it uses the same email used for Shopify purchase.
+3. Ensure UI messaging matches:
+
+   * “If you don’t have a password yet, tap ‘Forgot password’ to receive a secure email link to set your password.”
+
+E) Cloud Functions webhook correctness
+
+1. In functions/ locate Shopify webhook entrypoints:
+
+   * orders/create, orders/paid, customers/create, etc.
+2. Confirm the webhook does these steps:
+
+   * Verify webhook signature (HMAC)
+   * Parse customer email reliably
+   * Confirm payment/financial_status indicates paid/active entitlement
+   * Upsert Firestore user profile:
+     fields like:
+
+     * email
+     * shopifyCustomerId
+     * planId / planName
+     * entitlementStatus (active/inactive)
+     * entitlementUpdatedAt
+3. User creation/linking behavior:
+
+   * If Firebase Auth user exists for email: do NOT create a new one, just activate/update profile.
+   * If it does not exist: create Firebase Auth user with email (no password) and mark as requires password setup via reset email flow (do not send automatically unless spec says so).
+4. Make webhook handling idempotent:
+
+   * repeated webhook events should not duplicate users or corrupt state.
+
+F) Verification steps (must be runnable in Replit)
+Provide exact steps to verify login works, in this order:
+
+1. Confirm app boots on web
+2. Identify test email(s) to use
+3. Confirm Firestore entitlement state for the email
+4. Try login, verify gating
+5. Trigger forgot password, verify flow (even if email sending cannot fully complete in Replit, show the expected Firebase call paths and logs)
+6. Provide expected logs and where to see them
+
+OUTPUT FORMAT
+
+1. First reply: list files to edit + what is wrong now (bullet list).
+2. Then apply code changes with minimal diff.
+3. After changes: provide a concise checklist to test.
+
+DO NOT
+
+* Do not refactor the whole app
+* Do not change UI design
+* Do not add new large libraries unless required
+* Do not guess secrets or environment variables
+* Do not touch unrelated modules
+
+Start now by locating the auth + webhook files and summarizing the current flow vs the required flow.

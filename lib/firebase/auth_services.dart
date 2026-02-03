@@ -466,9 +466,12 @@ class AuthService {
 
   /* ------------------------------------------------------------------------ */
   /* ✅ CLIENT REQUIRED: EMAIL + PASSWORD (IN-APP ONLY)                        */
+  /* Firebase Auth is the password authority; Shopify is entitlement-only.    */
   /* ------------------------------------------------------------------------ */
 
-  Future<void> sendShopifySetPasswordEmail(
+  /// Send Firebase password reset email.
+  /// Firebase Auth must have a user for this email (provisioned by orderPaid webhook).
+  Future<void> sendPasswordResetEmail(
       BuildContext context, {
         required String typedEmail,
       }) async {
@@ -480,7 +483,7 @@ class AuthService {
     }
 
     try {
-      // ✅ 1) Lookup account FIRST
+      // 1) Lookup account FIRST - must exist from Shopify purchase
       final lookup = await _lookupAccountByEmail(emailLower);
       final found = lookup?['found'] == true;
 
@@ -489,39 +492,38 @@ class AuthService {
         return;
       }
 
-      // ✅ accounts docId is the Shopify Customer ID
-      final shopifyCustomerId =
-      (lookup?['accountId'] ?? '').toString().trim();
+      // 2) Send Firebase password reset email
+      await _auth.sendPasswordResetEmail(email: emailLower);
 
-      // ✅ 2) Call recover and include shopifyCustomerId
-      final res = await _callable(_fnShopifyCustomerRecover).call(<String, dynamic>{
-        'email': emailLower,
-        'shopifyCustomerId': shopifyCustomerId,
-      });
-
-      final map = _asMap(res.data);
-
-      final bool apiOk = map['ok'] == true;
-      final bool sent = map['sent'] == true;
-      final bool throttled = map['throttled'] == true;
-
-      if (apiOk && sent) {
+      await _showSimpleDialog(
+        context,
+        title: "Email sent",
+        message: "We sent a password reset email to $emailLower. Check your inbox and follow the link to set your password.",
+        accent: Colors.green,
+        icon: Icons.mark_email_read_outlined,
+        showWebsiteActions: false,
+      );
+    } on FirebaseAuthException catch (e) {
+      _p('sendPasswordResetEmail FirebaseAuthException: ${e.code} ${e.message}');
+      
+      if (e.code == 'user-not-found') {
+        // Firebase user not provisioned yet - this means webhook hasn't run
         await _showSimpleDialog(
           context,
-          title: "Email sent",
-          message: "We sent an email to $emailLower. Open it and tap the button to continue inside the app.",
-          accent: Colors.green,
-          icon: Icons.mark_email_read_outlined,
+          title: "Account sync pending",
+          message: "Your account is still being set up. If you purchased recently, please wait a few minutes and try again.",
+          accent: Colors.orange,
+          icon: Icons.hourglass_bottom,
           showWebsiteActions: false,
         );
         return;
       }
 
-      if (apiOk && throttled) {
+      if (e.code == 'too-many-requests') {
         await _showSimpleDialog(
           context,
           title: "Please wait",
-          message: "A reset email was already sent recently. Please wait a minute and try again.",
+          message: "Too many reset attempts. Please wait a few minutes and try again.",
           accent: Colors.orange,
           icon: Icons.hourglass_bottom,
           showWebsiteActions: false,
@@ -531,16 +533,16 @@ class AuthService {
 
       await _showSimpleDialog(
         context,
-        title: "Check your inbox",
-        message: "If this email is linked to a purchase, you will receive a password email shortly.",
-        accent: Colors.green,
-        icon: Icons.mark_email_read_outlined,
+        title: "Unable to send email",
+        message: e.message ?? "Please try again.",
+        accent: Colors.red,
+        icon: Icons.error_outline,
         showWebsiteActions: false,
       );
     } on FirebaseFunctionsException catch (eFn) {
-      await _showFunctionError(context, "Unable to send email", eFn);
+      await _showFunctionError(context, "Unable to verify account", eFn);
     } catch (e) {
-      _p('sendShopifySetPasswordEmail error: $e');
+      _p('sendPasswordResetEmail error: $e');
       await _showSimpleDialog(
         context,
         title: "Unable to send email",
@@ -552,13 +554,25 @@ class AuthService {
     }
   }
 
+  /// @deprecated Use sendPasswordResetEmail instead
+  Future<void> sendShopifySetPasswordEmail(
+      BuildContext context, {
+        required String typedEmail,
+      }) async {
+    // Redirect to Firebase-based password reset
+    await sendPasswordResetEmail(context, typedEmail: typedEmail);
+  }
 
 
-  /// Step 6 (client): Login with Shopify email+password via backend,
-  /// then sign into Firebase using the returned custom token.
-  ///
-  /// NOTE: Backend enforces entitlement (planStatus must be active).
-  Future<UserCredential?> loginWithShopifyEmailPassword(
+
+  /// Login with Firebase email+password directly.
+  /// After successful authentication, checks Firestore for entitlement (planStatus).
+  /// 
+  /// Flow:
+  /// 1. Firebase signInWithEmailAndPassword
+  /// 2. Check Firestore accounts/{id}.planStatus == 'active'
+  /// 3. If not active, sign out and show error
+  Future<UserCredential?> loginWithEmailPassword(
       BuildContext context, {
         required String email,
         required String password,
@@ -574,7 +588,7 @@ class AuthService {
       await _showSimpleDialog(
         context,
         title: "Enter password",
-        message: "If you haven't set a password yet, tap “Send Set-Password Email” to create it inside the app.",
+        message: "If you haven't set a password yet, tap \"Forgot Password\" to receive a password reset email.",
         accent: Colors.orange,
         icon: Icons.lock_outline,
         showWebsiteActions: false,
@@ -582,43 +596,37 @@ class AuthService {
       return null;
     }
 
-    // Existence-only: account must exist (purchase happened).
-    final ok = await _ensureAccountExists(context, emailLower);
-    if (!ok) return null;
-
     try {
-      final res = await _callable(_fnShopifyCustomerLogin).call(<String, dynamic>{
-        'email': emailLower,
-        'password': pw,
-      });
+      // 1) Authenticate with Firebase Auth
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: emailLower,
+        password: pw,
+      );
+      
+      _p('loginWithEmailPassword Firebase auth success uid=\${userCredential.user?.uid}');
 
-      final map = _asMap(res.data);
-      final customToken = (map['firebaseToken'] ?? map['customToken'] ?? '').toString().trim();
-
-      if (customToken.isEmpty) {
-        await _showSimpleDialog(
-          context,
-          title: "Login failed",
-          message: (map['message'] ?? "Login failed.").toString(),
-          accent: Colors.red,
-          icon: Icons.error_outline,
-          showWebsiteActions: false,
-        );
+      // 2) Check entitlement (planStatus must be 'active')
+      final isActive = await _ensureAccountIsActive(context, emailLower);
+      
+      if (!isActive) {
+        // Sign out if entitlement check fails
+        await _auth.signOut();
         return null;
       }
 
-      final userCredential = await _auth.signInWithCustomToken(customToken);
+      // 3) Update user profile in Firestore
       await UserDatabaseService().createOrUpdateUser();
+      
       _goHome(context);
       return userCredential;
-    } on FirebaseFunctionsException catch (eFn) {
-      final msg = (eFn.message ?? '').toLowerCase();
+    } on FirebaseAuthException catch (e) {
+      _p('loginWithEmailPassword FirebaseAuthException: \${e.code} \${e.message}');
 
-      if (eFn.code == 'unauthenticated') {
+      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
         await _showSimpleDialog(
           context,
           title: "Invalid credentials",
-          message: "Invalid email or password.",
+          message: "Invalid email or password. If you haven't set a password yet, tap \"Forgot Password\".",
           accent: Colors.red,
           icon: Icons.lock_outline,
           showWebsiteActions: false,
@@ -626,18 +634,23 @@ class AuthService {
         return null;
       }
 
-      if (eFn.code == 'permission-denied' ||
-          (eFn.code == 'failed-precondition' &&
-              (msg.contains('not active') || msg.contains('planstatus')))) {
-        await _showPlanNotActive(context);
+      if (e.code == 'user-disabled') {
+        await _showSimpleDialog(
+          context,
+          title: "Account disabled",
+          message: "This account has been disabled. Please contact support.",
+          accent: Colors.red,
+          icon: Icons.block,
+          showWebsiteActions: false,
+        );
         return null;
       }
 
-      if (eFn.code == 'failed-precondition' && msg.contains('not found yet')) {
+      if (e.code == 'too-many-requests') {
         await _showSimpleDialog(
           context,
-          title: "Sync pending",
-          message: "Your account is not synced yet. If you purchased recently, wait a moment and try again.",
+          title: "Too many attempts",
+          message: "Too many failed login attempts. Please wait a few minutes and try again.",
           accent: Colors.orange,
           icon: Icons.hourglass_bottom,
           showWebsiteActions: false,
@@ -645,15 +658,17 @@ class AuthService {
         return null;
       }
 
-      if (eFn.code == 'not-found') {
-        await _showPurchaseRequired(context);
-        return null;
-      }
-
-      await _showFunctionError(context, "Login failed", eFn);
+      await _showSimpleDialog(
+        context,
+        title: "Login failed",
+        message: e.message ?? "Please try again.",
+        accent: Colors.red,
+        icon: Icons.error_outline,
+        showWebsiteActions: false,
+      );
       return null;
     } catch (e) {
-      _p('loginWithShopifyEmailPassword error: $e');
+      _p('loginWithEmailPassword error: \$e');
       await _showSimpleDialog(
         context,
         title: "Login failed",
@@ -664,6 +679,16 @@ class AuthService {
       );
       return null;
     }
+  }
+
+  /// @deprecated Use loginWithEmailPassword instead
+  Future<UserCredential?> loginWithShopifyEmailPassword(
+      BuildContext context, {
+        required String email,
+        required String password,
+      }) async {
+    // Redirect to Firebase-based login
+    return loginWithEmailPassword(context, email: email, password: password);
   }
 
   /// Step 5 (client): Set password inside app using token from email deep link.

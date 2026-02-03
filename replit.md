@@ -48,6 +48,36 @@ cd functions && npm install  # Cloud Functions dependencies
 - Firebase project: `firebase.json`
 - Firestore indexes: `firestore.indexes.json`
 
+## Authentication Architecture
+
+### Flow Overview
+1. **Shopify** is the billing/entitlement authority (webhooks provision accounts)
+2. **Firebase Auth** is the identity/password authority (manages user credentials)
+3. **Firestore** stores entitlement status (`accounts/{customerId}.planStatus`)
+
+### User Journey
+1. User purchases on Shopify website
+2. `orders/paid` webhook provisions:
+   - Firestore account document with `planStatus: 'active'`
+   - Firebase Auth user (email, no password)
+3. User opens app and taps "Forgot Password"
+4. Firebase sends password reset email
+5. User sets password and logs in
+6. App validates entitlement (`planStatus === 'active'`) after login
+
+### Key Files
+- `lib/firebase/auth_services.dart` - Flutter auth service
+  - `loginWithEmailPassword()` - Firebase email/password login with entitlement check
+  - `sendPasswordResetEmail()` - Firebase password reset
+  - Social login (Google/Facebook) with entitlement gating
+- `functions/shopify/orderPaid.js` - Webhook provisions Firebase Auth users
+- `functions/auth/lookupAccountByEmail.js` - Entitlement lookup callable
+
+### Recent Changes (Feb 2026)
+- Switched from Shopify password management to Firebase Auth
+- `orderPaid` webhook now provisions Firebase Auth users automatically
+- Login uses `signInWithEmailAndPassword` with post-login entitlement check
+
 ## Notes
 - The app uses Firebase for authentication and data storage
 - Cloud Functions handle Shopify webhooks and integrations

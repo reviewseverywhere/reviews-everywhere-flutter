@@ -18,6 +18,7 @@ const { buildOrderEntitlement, computeSlotsState } = require('./entitlements');
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
+const auth = admin.auth();
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -78,6 +79,54 @@ function computePlanStatusShopifyFirst({ currentPlanStatus, slotsNet }) {
   if (net > 0) return 'active';
   if (cur === 'refunded') return 'refunded';
   return cur;
+}
+
+/**
+ * Provision Firebase Auth user for password-based login.
+ * Creates user with email but no password (user must use password reset flow).
+ * This is required for Firebase sendPasswordResetEmail to work.
+ * 
+ * Strategy: Check if user exists by email first (may have been created via social login).
+ * If exists, use that UID. If not, create new user with auto-generated UID.
+ * The authUid is stored in the account document for consistent mapping.
+ * 
+ * Note: We do NOT force UID=shopifyCustomerId because:
+ * - Social login users may already have Firebase Auth accounts with random UIDs
+ * - The authUid field in accounts/{customerId} tracks the mapping
+ */
+async function provisionFirebaseAuthUser({ email, shopifyCustomerId }) {
+  if (!email || !shopifyCustomerId) {
+    console.log('[provisionFirebaseAuthUser] skipping - missing email or customerId');
+    return null;
+  }
+
+  const emailLower = normalizeEmail(email);
+
+  try {
+    // Check if user already exists with this email (may be from social login)
+    const existingUser = await auth.getUserByEmail(emailLower).catch(() => null);
+    
+    if (existingUser) {
+      console.log(`[provisionFirebaseAuthUser] user exists with email=${emailLower} uid=${existingUser.uid}`);
+      // Return existing user - their UID will be stored as authUid in account doc
+      return existingUser;
+    }
+
+    // Create new Firebase Auth user with auto-generated UID
+    // Do NOT specify uid to avoid conflicts with custom token flow
+    const newUser = await auth.createUser({
+      email: emailLower,
+      emailVerified: false,
+      disabled: false,
+    });
+
+    console.log(`[provisionFirebaseAuthUser] created new user uid=${newUser.uid} email=${emailLower}`);
+    return newUser;
+  } catch (err) {
+    console.error(`[provisionFirebaseAuthUser] error for email=${emailLower}:`, err);
+    // Don't throw - webhook should still succeed even if auth user creation fails
+    return null;
+  }
 }
 
 /**
@@ -311,6 +360,23 @@ async function shopifyOrderPaidHandler(req, res) {
       if (!accountSnap.exists) tx.set(accountRef, { ...baseAccount, createdAt: now });
       else tx.set(accountRef, baseAccount, { merge: true });
     });
+
+    // Provision Firebase Auth user for password-based login (outside transaction)
+    // This enables Firebase password reset emails to work
+    if (emailLower && customerId) {
+      const authUser = await provisionFirebaseAuthUser({
+        email: emailLower,
+        shopifyCustomerId: customerId,
+      });
+      
+      // Update account with authUid if user was created/found
+      if (authUser?.uid) {
+        await db.collection('accounts').doc(customerId).set({
+          authUid: authUser.uid,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+    }
 
     await markWebhookProcessed(lock.eventRef);
     return res.status(200).send('OK');

@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "996925096071",
+    "project_id": "reviewseverywhere-b3eb5",
+    "storage_bucket": "reviewseverywhere-b3eb5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996925096071:android:08c4536d766bce73a2b822",
+        "android_client_info": {
+          "package_name": "com.reviewseverywhere.review"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "996925096071-m9pbrgenurqcmqncrvnuk921un2ncth5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.reviewseverywhere.review",
+            "certificate_hash": "4e4efb925dca243bc3b54a55fcfc106ca572f158"
+          }
+        },
+        {
+          "client_id": "996925096071-aqeps8s6uh93pedl3bklkq955ljlj671.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAp1kOl6OZnutqePWz10huHGueP6bJUazw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "996925096071-aqeps8s6uh93pedl3bklkq955ljlj671.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "996925096071-c22sig36stkdu1ti00ojigsk412qgvrv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cards"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

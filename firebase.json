@@ -1,0 +1,4 @@
+{"firestore":{"database":"(default)","location":"us-central1","rules":" ","indexes":"firestore.indexes.json"},"functions": {
+  "source": "functions"
+},
+  "flutter":{"platforms":{"android":{"default":{"projectId":"reviewseverywhere-b3eb5","appId":"1:996925096071:android:08c4536d766bce73a2b822","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"reviewseverywhere-b3eb5","configurations":{"android":"1:996925096071:android:08c4536d766bce73a2b822","ios":"1:996925096071:ios:eb3968bbdabb2df9a2b822","macos":"1:996925096071:ios:801df65b928aa3a6a2b822","web":"1:996925096071:web:17e91543e198e0b1a2b822","windows":"1:996925096071:web:8b66f098257619a2a2b822"}}}}}}

@@ -1,0 +1,20 @@
+# Flutter
+.build/
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+coverage/
+
+# Firebase Functions
+functions/node_modules/
+functions/lib/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml

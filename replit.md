@@ -46,13 +46,28 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 - **Bottom Navigation Bar** with 5 tabs: Home, Wristbands, Teams, Analytics, Account
 - No burger/drawer menu
 
-### Onboarding (First Login Only)
-1. **Step 1**: Welcome - Purchaser name, initial slots
-2. **Step 2**: Define Wristbands - Name each wristband
+### Onboarding (First Login Only) - Master V3 Logic
+1. **Step 1**: Welcome - Purchaser name (min 2 chars), initial slots (1-50 integer)
+   - Next button blocked until both fields are valid
+2. **Step 2**: Define Wristbands - Pre-initialized with exactly maxWristbands rows from Step 1
+   - All names required (min 2 chars), must be unique (case-insensitive)
+   - Cannot add more than maxWristbands, can remove down to 1
+   - Wristband count syncs if user goes back and changes slots
 3. **Step 3**: Define Teams - Team names and members
-4. **Step 4**: Assign Wristbands - Map wristbands to members, set GBP URL
+   - At least 1 team with name (min 2 chars)
+   - At least 2 members total across all teams (min 2 chars each)
+   - Member names unique within each team (case-insensitive)
+4. **Step 4**: Assign Wristbands & Set GBP URL
+   - HTTPS URL required (http rejected for security)
+   - All wristbands must be assigned to a member
+   - Final CTA: "Finish Setup"
 5. Data saved to Firestore `accounts/{customerId}.onboardingData`
 6. `onboardingComplete: true` prevents re-showing
+
+**Validation Behavior**: 
+- Next/Finish button shows disabled state (grayed out) when validation fails
+- Clicking shows snackbar + inline error with specific message
+- Real-time validation updates as user types
 
 ### Core Actions (Unchanged)
 - **View Slots**: Shows account/slot information from Firestore

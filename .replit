@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["flutter"]
+packages = ["flutter", "firebase-tools"]
 
 [workflows]
 runButton = "Project"
@@ -33,6 +33,14 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8313
+externalPort = 3001
+
+[[ports]]
+localPort = 9005
+externalPort = 3000
 
 [deployment]
 deploymentTarget = "static"

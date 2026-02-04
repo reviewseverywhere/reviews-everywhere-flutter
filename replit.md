@@ -1,84 +1,104 @@
-# Cards - Flutter Web App
+# Reviews Everywhere - Flutter Web App
 
 ## Overview
-A Flutter web application with Firebase integration. The app includes NFC tag functionality, Firebase authentication (Google Sign-In, Facebook Auth), Cloud Firestore, and Cloud Functions.
+A Flutter web application with Firebase integration for NFC tag management. Features multiple authentication methods (email/password, Google, Facebook), Shopify integration for billing/entitlement management, and a premium mobile-first UI with onboarding flow.
 
 ## Project Structure
 ```
-├── lib/               # Flutter/Dart source code
-│   ├── main.dart      # App entry point
-│   ├── app.dart       # Main app widget
-│   ├── core/          # Core utilities
-│   ├── features/      # Feature modules (NFC tags, etc.)
-│   └── firebase/      # Firebase configuration
-├── functions/         # Firebase Cloud Functions (Node.js)
-├── web/              # Web-specific assets
-├── assets/           # App assets
-├── build/web/        # Built web app (auto-generated)
-└── server.py         # Python server to serve the web app
+├── lib/
+│   ├── main.dart                    # App entry point
+│   ├── app.dart                     # Main app widget with routing
+│   ├── core/
+│   │   └── theme/app_theme.dart     # Premium design system
+│   ├── features/
+│   │   ├── nfc_tag/                 # Core NFC functionality
+│   │   │   ├── presentation/        # UI pages and widgets
+│   │   │   ├── domain/              # Use cases (write_url, clear_tag)
+│   │   │   └── data/                # Repositories
+│   │   ├── onboarding/              # 4-step onboarding flow
+│   │   │   ├── presentation/pages/  # Onboarding screens
+│   │   │   └── data/                # OnboardingService
+│   │   ├── dashboard/               # Home dashboard
+│   │   └── shell/                   # Bottom navigation shell
+│   │       ├── main_shell.dart      # 5-tab navigation
+│   │       ├── wristbands_page.dart # Wristbands tab (placeholder)
+│   │       ├── teams_page.dart      # Teams tab (placeholder)
+│   │       ├── analytics_page.dart  # Analytics tab (placeholder)
+│   │       └── account_page.dart    # Account management
+│   └── firebase/                    # Firebase configuration
+├── functions/                       # Firebase Cloud Functions (Node.js)
+├── web/                             # Web-specific assets
+├── assets/                          # App assets (logo, animations)
+├── build/web/                       # Built web app (auto-generated)
+└── server.py                        # Python server (port 5000)
 ```
 
 ## Technology Stack
 - **Frontend**: Flutter 3.32.0 (Dart 3.8.0)
 - **Backend**: Firebase Cloud Functions (Node.js 20)
 - **Database**: Cloud Firestore
-- **Authentication**: Firebase Auth (Google, Facebook)
+- **Authentication**: Firebase Auth (Google, Facebook, Email/Password)
 - **Hosting**: Python HTTP server on port 5000
+
+## App Flow
+
+### Navigation
+- **Bottom Navigation Bar** with 5 tabs: Home, Wristbands, Teams, Analytics, Account
+- No burger/drawer menu
+
+### Onboarding (First Login Only)
+1. **Step 1**: Welcome - Purchaser name, initial slots
+2. **Step 2**: Define Wristbands - Name each wristband
+3. **Step 3**: Define Teams - Team names and members
+4. **Step 4**: Assign Wristbands - Map wristbands to members, set GBP URL
+5. Data saved to Firestore `accounts/{customerId}.onboardingData`
+6. `onboardingComplete: true` prevents re-showing
+
+### Core Actions (Unchanged)
+- **View Slots**: Shows account/slot information from Firestore
+- **Write URL**: Programs NFC wristband with custom URL
+- **Clear URL**: Removes URL from NFC wristband
 
 ## Development
 
 ### Running the App
-The workflow "Flutter Web App" automatically:
-1. Serves the built Flutter web app on port 5000
+The workflow "Flutter Web App" automatically serves the built app on port 5000.
 
-### Rebuilding the App
-After making changes to Dart code:
+### Rebuilding
 ```bash
 flutter build web --base-href "/"
 ```
 
 ### Installing Dependencies
 ```bash
-flutter pub get          # Flutter dependencies
-cd functions && npm install  # Cloud Functions dependencies
+flutter pub get                      # Flutter dependencies
+cd functions && npm install          # Cloud Functions dependencies
 ```
-
-## Configuration
-- Firebase config: `lib/firebase_options.dart`
-- Firebase project: `firebase.json`
-- Firestore indexes: `firestore.indexes.json`
 
 ## Authentication Architecture
 
 ### Flow Overview
-1. **Shopify** is the billing/entitlement authority (webhooks provision accounts)
-2. **Firebase Auth** is the identity/password authority (manages user credentials)
-3. **Firestore** stores entitlement status (`accounts/{customerId}.planStatus`)
+1. **Shopify** = billing/entitlement authority (webhooks provision accounts)
+2. **Firebase Auth** = identity/password authority (manages credentials)
+3. **Firestore** = stores `accounts/{customerId}.planStatus`
 
 ### User Journey
-1. User purchases on Shopify website
-2. `orders/paid` webhook provisions:
-   - Firestore account document with `planStatus: 'active'`
-   - Firebase Auth user (email, no password)
-3. User opens app and taps "Forgot Password"
-4. Firebase sends password reset email
-5. User sets password and logs in
-6. App validates entitlement (`planStatus === 'active'`) after login
+1. User purchases on Shopify
+2. `orders/paid` webhook provisions Firestore account + Firebase Auth user
+3. User opens app → "Forgot Password" → Firebase reset email
+4. User sets password → logs in
+5. App checks `planStatus === 'active'` after login
+6. First login → onboarding flow → dashboard
 
 ### Key Files
-- `lib/firebase/auth_services.dart` - Flutter auth service
-  - `loginWithEmailPassword()` - Firebase email/password login with entitlement check
-  - `sendPasswordResetEmail()` - Firebase password reset
-  - Social login (Google/Facebook) with entitlement gating
-- `functions/shopify/orderPaid.js` - Webhook provisions Firebase Auth users
-- `functions/auth/lookupAccountByEmail.js` - Entitlement lookup callable
-
-### Recent Changes (Feb 2026)
-- Switched from Shopify password management to Firebase Auth
-- `orderPaid` webhook now provisions Firebase Auth users automatically
-- Login uses `signInWithEmailAndPassword` with post-login entitlement check
+- `lib/firebase/auth_services.dart` - Auth service
+- `lib/features/onboarding/data/onboarding_service.dart` - Onboarding persistence
+- `lib/features/shell/main_shell.dart` - Bottom navigation
+- `lib/features/dashboard/home_dashboard.dart` - Premium dashboard
+- `functions/shopify/orderPaid.js` - Webhook provisions users
 
 ## Notes
 - The app uses Firebase for authentication and data storage
 - Cloud Functions handle Shopify webhooks and integrations
-- NFC functionality is available on supported devices
+- NFC functionality requires device support (simulator mode for testing)
+- Onboarding data stored in `accounts/{customerId}.onboardingData`

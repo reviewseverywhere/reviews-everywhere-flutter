@@ -11,6 +11,8 @@ import 'package:cards/features/nfc_tag/presentation/pages/splash_page.dart';
 import 'package:cards/features/nfc_tag/presentation/pages/home_page.dart';
 import 'package:cards/features/nfc_tag/presentation/pages/auth/auth_page.dart';
 import 'package:cards/features/nfc_tag/presentation/pages/auth/set_password_page.dart';
+import 'package:cards/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:cards/features/shell/main_shell.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -177,6 +179,8 @@ class _AppState extends State<App> {
           SplashPage.routeName: (_) => const SplashPage(),
           AuthPage.routeName: (_) => const AuthPage(),
           HomePage.routeName: (_) => const HomePage(),
+          OnboardingPage.routeName: (_) => const OnboardingPage(),
+          MainShell.routeName: (_) => const MainShell(),
           // DO NOT put SetPasswordPage here (it requires args)
         },
       ),

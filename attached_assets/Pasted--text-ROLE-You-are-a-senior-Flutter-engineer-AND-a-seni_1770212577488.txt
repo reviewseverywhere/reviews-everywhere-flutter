@@ -1,0 +1,154 @@
+```text
+ROLE
+You are a senior Flutter engineer AND a senior mobile app designer working on the Reviews Everywhere project.
+Your work must be production quality: clean architecture, consistent UI system, no broken flows.
+
+MISSION
+Build the NEW post-login product UI (WOW premium mobile design) and ADD the full 4-step onboarding flow.
+Keep ALL existing core functions and logic working exactly as they do now, but rebuild the entire UI/UX.
+
+ABSOLUTE RULES (NON NEGOTIABLE)
+1) Do NOT break, rewrite, or change business logic, Firebase logic, Firestore schemas, Shopify entitlement logic, or Shopify webhook behavior.
+   - Shopify webhooks already exist and must remain as-is. Do NOT modify webhook endpoints, payload handling, or Cloud Functions.
+2) The following core actions MUST keep working exactly as before (same behavior, same data, same side effects):
+   - View Slots
+   - Write URL
+   - Clear URL
+3) You are allowed to change ONLY the UI, navigation, screen layouts, widgets, and routing logic needed to display onboarding once.
+4) Delete the current post-login UI layout entirely (visual structure), but do not remove the underlying functions.
+5) Remove the burger menu completely. Replace with bottom navigation (icons + labels).
+6) Implement onboarding as a real product flow in code (not just redesign). The app currently has a simple post-login screen, now we ADD the onboarding flow and the new dashboard.
+7) Use the prototype screenshots ONLY as FLOW and COMPONENT reference. Final visuals must be premium, modern, mobile-first, WOW, aligned with the brand/logo.
+8) Keep the titles and description text of each onboarding step exactly as in the prototype. Do not rewrite wording.
+
+PHASE A (FIRST, BEFORE CHANGING UI)
+1) Inspect and identify where the app currently routes after login.
+2) Identify the existing functions/handlers for:
+   - View Slots
+   - Write URL
+   - Clear URL
+3) Identify where account/plan/slots/purchase data is read from Firestore.
+4) DO NOT change those behaviors. Only rewire UI to call them.
+
+PROTOTYPE SCREENSHOTS (ALREADY IN THE PROJECT)
+The 4 onboarding reference screenshots are present and named exactly:
+- onboard1
+- onboard2
+- onboard3
+- onboard4
+Use them in order to match the onboarding flow (Step 1 of 4 through Step 4 of 4).
+Match the structure and components shown, but apply a premium WOW visual style.
+Do NOT change the titles and descriptions shown in those screenshots.
+
+NEW NAVIGATION (NO BURGER MENU)
+Create a bottom navigation bar with 5 tabs (icons + labels):
+- Home
+- Wristbands
+- Teams
+- Analytics
+- Account
+
+Notes:
+- Analytics and Account can be premium placeholder screens initially, but must exist and look consistent.
+- Wristbands and Teams screens can start minimal if their full logic is not yet implemented, but must exist and be navigable.
+
+NEW HOME (DASHBOARD) REQUIREMENTS
+Home must be a premium dashboard that surfaces the 3 core actions:
+- View Slots
+- Write URL
+- Clear URL
+
+Home must also show summary cards using existing data only (do not invent):
+- Plan Status (active/frozen/etc, based on existing model)
+- Available slots
+- Used slots (activated)
+- Net slots
+- Purchased total / refunded total (if already present)
+- Last updated timestamp (if already available)
+
+NFC STATE
+If NFC is not available (as shown now), show a premium styled banner/notice.
+Do not remove this behavior. Only redesign the UI.
+
+ONBOARDING FLOW (MUST MATCH THE PROTOTYPE FLOW)
+Build a 4-step onboarding wizard matching the prototype structure and component behavior.
+Keep the same titles and description text as onboard1–onboard4.
+
+Step 1 of 4: Welcome & Initial Setup
+- Purchaser Name input
+- Number of Initial Wristband Slots input
+- CTA: Next
+- Visible progress indicator: Step 1 of 4
+
+Step 2 of 4: Define Your Wristbands
+- Dynamic list of wristband name inputs
+- Add Another Wristband button (+)
+- Remove row (X)
+- CTA: Back, Next
+- Visible progress indicator: Step 2 of 4
+
+Step 3 of 4: Define Your Teams and Members
+- Team Name input
+- Team Members dynamic inputs
+- Add Member button
+- Remove member (X)
+- Respect the requirement shown in the prototype (minimum members overall)
+- CTA: Back, Next
+- Visible progress indicator: Step 3 of 4
+
+Step 4 of 4: Assign Wristbands & Set Profile URL
+- Google Business Profile URL input (applies to all teams)
+- For each wristband: assign to a team member via dropdown/select, or leave unassigned
+- Warning banner if wristbands unassigned (as prototype)
+- FINAL CTA MUST NOT say "Start Simulation"
+  Use: "Finish Setup" (preferred) or another premium equivalent, but NOT "Start Simulation"
+- Visible progress indicator: Step 4 of 4
+
+ONBOARDING COMPLETE GATING
+Onboarding must appear ONLY the first time after login.
+Persist completion so it never shows again after completion:
+- Reuse an existing Firestore user/account document if present (preferred).
+- If a completion flag already exists, use it.
+- If not, add a boolean field onboardingComplete in the correct existing user/account document.
+Do NOT create random new collections if an appropriate structure already exists.
+
+After Step 4:
+- Save onboarding data (teams, members, wristbands, assignments, GBP URL) to Firestore in the correct existing structure.
+- Set onboardingComplete = true
+- Route to the new Home dashboard.
+
+CRITICAL: KEEP FUNCTIONS INTACT
+After onboarding:
+- View Slots must still show correct data and remain correct
+- Write URL must still run the existing implementation
+- Clear URL must still run the existing implementation
+
+DESIGN REQUIREMENTS (WOW PREMIUM)
+- Mobile-first layouts, modern spacing, strong hierarchy
+- Premium cards, smooth transitions, subtle micro-animations
+- High-quality typography, consistent components
+- Keep brand identity: use existing logo and its core colors
+- Remove the current plain/cheap post-login UI completely
+
+WORK ORDER (DO IN THIS ORDER)
+1) Map existing post-login routing and identify existing handlers for View Slots, Write URL, Clear URL.
+2) Remove burger menu and implement bottom navigation shell.
+3) Implement onboarding gating (check onboardingComplete).
+4) Build the 4-step onboarding UI using onboard1–onboard4 as reference.
+5) Save onboarding data, set onboardingComplete, route to new dashboard.
+6) Build the new premium Home dashboard and wire the 3 core actions to existing logic.
+7) Add placeholder screens for Analytics and Account (premium UI, minimal logic).
+8) Verify with a short checklist:
+   - first login shows onboarding
+   - after completion onboarding never shows again
+   - dashboard loads
+   - View Slots, Write URL, Clear URL still work exactly
+
+OUTPUT REQUIREMENT
+Do not give long explanations.
+Start by listing the exact files you will modify for:
+- routing/navigation
+- onboarding screens
+- dashboard screen
+Then implement the changes.
+```

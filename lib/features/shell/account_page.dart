@@ -14,130 +14,147 @@ class AccountPage extends StatelessWidget {
     final displayName = user?.displayName ?? 'User';
     final email = user?.email ?? '';
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Account', style: AppTextStyles.h1),
-            const SizedBox(height: AppSpacing.xl),
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      border: Border.all(color: AppColors.border, width: 2),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      child: photoUrl != null && photoUrl.isNotEmpty
-                          ? Image.network(
-                              photoUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
+    return GradientBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              Center(
+                child: Column(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 3),
+                        boxShadow: AppShadows.card,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: photoUrl != null && photoUrl.isNotEmpty
+                            ? Image.network(
+                                photoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            : const Icon(
                                 Icons.person,
                                 size: 50,
-                                color: AppColors.textMuted,
+                                color: AppColors.primary,
                               ),
-                            )
-                          : Icon(
-                              Icons.person,
-                              size: 50,
-                              color: AppColors.textMuted,
-                            ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    displayName,
-                    style: AppTextStyles.h2,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    email,
-                    style: AppTextStyles.body,
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      displayName,
+                      style: AppTextStyles.headline,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      email,
+                      style: AppTextStyles.bodyMedium,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xxl),
-            _AccountOption(
-              icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              subtitle: 'Manage notification preferences',
-              onTap: () {},
-            ),
-            _AccountOption(
-              icon: Icons.security_outlined,
-              title: 'Security',
-              subtitle: 'Password and security settings',
-              onTap: () {},
-            ),
-            _AccountOption(
-              icon: Icons.help_outline,
-              title: 'Help & Support',
-              subtitle: 'Get help with Reviews Everywhere',
-              onTap: () {},
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            const Divider(),
-            const SizedBox(height: AppSpacing.lg),
-            _AccountOption(
-              icon: Icons.logout,
-              title: 'Logout',
-              subtitle: 'Sign out of your account',
-              color: AppColors.orange,
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => ConfirmActionDialog(
-                    title: "Logout",
-                    description: "Are you sure you want to log out of your account?",
-                    cancelText: "Stay Logged In",
-                    confirmText: "Logout",
-                    icon: Icons.logout,
-                    iconBgColor: Colors.orange,
-                    confirmButtonColor: Colors.red,
-                    onCancel: () {},
-                    onConfirm: () {
-                      AuthService().logout(context);
-                    },
-                  ),
-                );
-              },
-            ),
-            _AccountOption(
-              icon: Icons.delete_forever,
-              title: 'Delete Account',
-              subtitle: 'Permanently delete your account',
-              color: AppColors.red,
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => ConfirmActionDialog(
-                    title: "Delete Account?",
-                    description: "This action cannot be undone. Are you sure?",
-                    cancelText: "No, Keep",
-                    confirmText: "Yes, Delete",
-                    icon: Icons.delete_forever,
-                    iconBgColor: Colors.red,
-                    cancelButtonColor: Colors.white,
-                    confirmButtonColor: Colors.red,
-                    onCancel: () {},
-                    onConfirm: () {
-                      AuthService().deleteAccount(context);
-                    },
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.xl),
-          ],
+              const SizedBox(height: AppSpacing.xl),
+              PremiumCard(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Column(
+                  children: [
+                    _AccountOption(
+                      icon: Icons.notifications_outlined,
+                      title: 'Notifications',
+                      subtitle: 'Manage notification preferences',
+                      onTap: () {},
+                    ),
+                    const Divider(height: 1, indent: 68),
+                    _AccountOption(
+                      icon: Icons.security_outlined,
+                      title: 'Security',
+                      subtitle: 'Password and security settings',
+                      onTap: () {},
+                    ),
+                    const Divider(height: 1, indent: 68),
+                    _AccountOption(
+                      icon: Icons.help_outline,
+                      title: 'Help & Support',
+                      subtitle: 'Get help with Reviews Everywhere',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PremiumCard(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Column(
+                  children: [
+                    _AccountOption(
+                      icon: Icons.logout,
+                      title: 'Logout',
+                      subtitle: 'Sign out of your account',
+                      color: AppColors.orange,
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => ConfirmActionDialog(
+                            title: "Logout",
+                            description: "Are you sure you want to log out of your account?",
+                            cancelText: "Stay Logged In",
+                            confirmText: "Logout",
+                            icon: Icons.logout,
+                            iconBgColor: AppColors.orange,
+                            confirmButtonColor: AppColors.orange,
+                            onCancel: () {},
+                            onConfirm: () {
+                              AuthService().logout(context);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 68),
+                    _AccountOption(
+                      icon: Icons.delete_forever,
+                      title: 'Delete Account',
+                      subtitle: 'Permanently delete your account',
+                      color: AppColors.orange,
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => ConfirmActionDialog(
+                            title: "Delete Account?",
+                            description: "This action cannot be undone. Are you sure?",
+                            cancelText: "No, Keep",
+                            confirmText: "Yes, Delete",
+                            icon: Icons.delete_forever,
+                            iconBgColor: AppColors.orange,
+                            cancelButtonColor: Colors.white,
+                            confirmButtonColor: AppColors.orange,
+                            onCancel: () {},
+                            onConfirm: () {
+                              AuthService().deleteAccount(context);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
         ),
       ),
     );
@@ -161,17 +178,16 @@ class _AccountOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppColors.textPrimary;
+    final effectiveColor = color ?? AppColors.primary;
     
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.md,
-            horizontal: AppSpacing.sm,
+            horizontal: AppSpacing.md,
           ),
           child: Row(
             children: [
@@ -180,7 +196,7 @@ class _AccountOption extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: effectiveColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: effectiveColor, size: 22),
               ),
@@ -192,9 +208,9 @@ class _AccountOption extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: effectiveColor,
+                        color: color ?? AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),

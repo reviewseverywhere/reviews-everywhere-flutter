@@ -146,60 +146,40 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: _buildCurrentStep(),
+      body: GradientBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: _buildCurrentStep(),
+                ),
               ),
-            ),
-            _buildNavigation(),
-          ],
+              _buildNavigation(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.divider)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset('assets/logo_1.png', width: 40, height: 40),
-          const SizedBox(width: AppSpacing.md),
-          const Expanded(
-            child: Text(
-              'Reviews Everywhere',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppRadius.full),
-            ),
-            child: Text(
-              'Step ${_currentStep + 1} of 4',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+          const SizedBox(width: 80),
+          Image.asset('assets/logo_1.png', width: 64, height: 64),
+          SizedBox(
+            width: 80,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: StepPill(
+                currentStep: _currentStep + 1,
+                totalSteps: 4,
               ),
             ),
           ),
@@ -224,61 +204,77 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Widget _buildStep1() {
-    return _StepCard(
+    return _OnboardingCard(
       title: 'Welcome & Initial Setup',
       description: "Welcome! Let's get your Reviews Everywhere dashboard set up. We'll start with some basic information.",
       children: [
-        _InputField(
+        _PremiumInputField(
           label: 'Your Name (Purchaser)',
           hint: 'e.g., Jane Doe',
           controller: _purchaserNameController,
         ),
         const SizedBox(height: AppSpacing.lg),
-        _InputField(
+        _PremiumInputField(
           label: 'Number of Initial Wristband Slots',
           hint: '10',
           controller: _slotsController,
           keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          "This determines how many wristband inputs you'll start with. You can always add more later.",
-          style: AppTextStyles.caption,
+          helperText: "This determines how many wristband inputs you'll start with. You can always add more later.",
         ),
       ],
     );
   }
 
   Widget _buildStep2() {
-    return _StepCard(
+    return _OnboardingCard(
       title: 'Define Your Wristbands',
       description: "Now, give your wristbands custom names. These will help you identify them easily later. Each wristband starts unassigned.",
       children: [
         ...List.generate(_wristbandControllers.length, (i) {
           return Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _wristbandControllers[i],
-                    decoration: AppWidgets.inputDecoration(
-                      label: '',
-                      hint: 'Wristband ${i + 1} Custom Name (e.g., Lobby Band)',
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(AppRadius.input),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _wristbandControllers[i],
+                      decoration: InputDecoration(
+                        hintText: 'Wristband ${i + 1} (e.g., Lobby Band)',
+                        hintStyle: AppTextStyles.caption,
+                        filled: false,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      ),
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                ),
-                if (_wristbandControllers.length > 1)
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textMuted),
-                    onPressed: () {
-                      setState(() {
-                        _wristbandControllers[i].dispose();
-                        _wristbandControllers.removeAt(i);
-                      });
-                    },
-                  ),
-              ],
+                  if (_wristbandControllers.length > 1)
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.orange, width: 1.5),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: AppColors.orange, size: 18),
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          setState(() {
+                            _wristbandControllers[i].dispose();
+                            _wristbandControllers.removeAt(i);
+                          });
+                        },
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         }),
@@ -289,7 +285,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               _wristbandControllers.add(TextEditingController());
             });
           },
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add, color: AppColors.primary),
           label: const Text('Add Another Wristband'),
           style: AppWidgets.outlineButton(),
         ),
@@ -298,33 +294,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Widget _buildStep3() {
-    return _StepCard(
+    return _OnboardingCard(
       title: 'Define Your Teams and Members',
       description: "Who will be using these wristbands? Organize your team members into teams. You need at least 2 members overall to start.",
       children: [
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: AppColors.accent.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 20),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Suggestion: Consider one team for all members, or two smaller teams (1-2 members each).',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        const InfoBanner(
+          message: 'Suggestion: Consider one team for all members, or two smaller teams (1-2 members each).',
+          icon: Icons.lightbulb_outline,
         ),
         const SizedBox(height: AppSpacing.lg),
         ...List.generate(_teams.length, (ti) => _buildTeamEditor(ti)),
@@ -339,13 +315,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Team Name', style: AppTextStyles.label),
+          Text('TEAM NAME', style: AppTextStyles.sectionLabel),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: team.nameController,
@@ -353,46 +329,68 @@ class _OnboardingPageState extends State<OnboardingPage> {
               label: '',
               hint: 'My First Team',
             ),
+            style: const TextStyle(fontSize: 16),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text('Team Members:', style: AppTextStyles.label),
+          const SizedBox(height: AppSpacing.lg),
+          Text('TEAM MEMBERS', style: AppTextStyles.sectionLabel),
           const SizedBox(height: AppSpacing.sm),
           ...List.generate(team.memberControllers.length, (mi) {
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: team.memberControllers[mi],
-                      decoration: AppWidgets.inputDecoration(
-                        label: '',
-                        hint: 'Member ${mi + 1} Name',
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: team.memberControllers[mi],
+                        decoration: InputDecoration(
+                          hintText: 'Member ${mi + 1} Name',
+                          hintStyle: AppTextStyles.caption,
+                          filled: false,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        ),
+                        style: const TextStyle(fontSize: 16),
                       ),
                     ),
-                  ),
-                  if (team.memberControllers.length > 1)
-                    IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.textMuted),
-                      onPressed: () {
-                        setState(() {
-                          team.memberControllers[mi].dispose();
-                          team.memberControllers.removeAt(mi);
-                        });
-                      },
-                    ),
-                ],
+                    if (team.memberControllers.length > 1)
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.orange, width: 1.5),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: AppColors.orange, size: 18),
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            setState(() {
+                              team.memberControllers[mi].dispose();
+                              team.memberControllers.removeAt(mi);
+                            });
+                          },
+                        ),
+                      ),
+                  ],
+                ),
               ),
             );
           }),
+          const SizedBox(height: AppSpacing.sm),
           TextButton.icon(
             onPressed: () {
               setState(() {
                 team.memberControllers.add(TextEditingController());
               });
             },
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add Member'),
+            icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
+            label: const Text('Add Member', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -408,62 +406,74 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final members = _getAllMembers();
     final unassigned = _unassignedCount();
 
-    return _StepCard(
+    return _OnboardingCard(
       title: 'Assign Wristbands & Set Profile URL',
       description: "Assign your wristbands to your team members and provide a Google Business Profile URL for all teams. This URL will be associated with all assigned wristbands.",
       children: [
-        _InputField(
+        _PremiumInputField(
           label: 'Google Business Profile URL (for all teams)',
           hint: 'e.g., https://business.google.com/dashboard/l/your_business_id',
           controller: _gbpUrlController,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'This URL will be linked to all wristbands assigned to a team member.',
-          style: AppTextStyles.caption,
+          helperText: 'This URL will be linked to all wristbands assigned to a team member.',
         ),
         const SizedBox(height: AppSpacing.xl),
-        Text('Assign Wristbands:', style: AppTextStyles.bodyBold),
+        Text('ASSIGN WRISTBANDS', style: AppTextStyles.sectionLabel),
         const SizedBox(height: AppSpacing.md),
         if (wristbands.isEmpty)
-          Text(
-            'No wristbands defined. Go back to Step 2.',
-            style: AppTextStyles.caption,
+          const InfoBanner(
+            message: 'No wristbands defined. Go back to Step 2.',
+            icon: Icons.info_outline,
+            isWarning: true,
           )
         else
           ...wristbands.map((entry) {
             final idx = entry.key;
             final name = entry.value.text.trim();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            return Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
               child: Row(
                 children: [
                   Expanded(
                     flex: 2,
-                    child: Text(name, style: AppTextStyles.body),
+                    child: Text(name, style: AppTextStyles.bodyBold),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     flex: 3,
-                    child: DropdownButtonFormField<String>(
-                      value: _wristbandAssignments[idx],
-                      decoration: AppWidgets.inputDecoration(label: ''),
-                      hint: const Text('-- Unassigned --'),
-                      items: [
-                        const DropdownMenuItem(
-                          value: null,
-                          child: Text('-- Unassigned --'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _wristbandAssignments[idx],
+                          isExpanded: true,
+                          hint: const Text('Unassigned', style: TextStyle(color: AppColors.textMuted)),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('Unassigned'),
+                            ),
+                            ...members.map((m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(m),
+                            )),
+                          ],
+                          onChanged: (v) {
+                            setState(() {
+                              _wristbandAssignments[idx] = v;
+                            });
+                          },
                         ),
-                        ...members.map((m) => DropdownMenuItem(
-                          value: m,
-                          child: Text(m),
-                        )),
-                      ],
-                      onChanged: (v) {
-                        setState(() {
-                          _wristbandAssignments[idx] = v;
-                        });
-                      },
+                      ),
                     ),
                   ),
                 ],
@@ -472,29 +482,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
           }),
         if (unassigned > 0) ...[
           const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.orange.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber, color: AppColors.orange, size: 20),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'You still have $unassigned wristband(s) unassigned.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.orange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          InfoBanner(
+            message: 'You still have $unassigned wristband(s) unassigned.',
+            icon: Icons.warning_amber,
+            isWarning: true,
           ),
         ],
       ],
@@ -502,59 +493,62 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Widget _buildNavigation() {
+    final isFirstStep = _currentStep == 0;
+    final isLastStep = _currentStep == 3;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.divider)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          if (_currentStep > 0)
-            TextButton(
-              onPressed: _back,
-              child: const Text(
-                'Back',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (!isFirstStep)
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _back,
+                  style: AppWidgets.secondaryButton(),
+                  child: const Text('Back'),
                 ),
               ),
-            ),
-          const Spacer(),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton(
-              style: AppWidgets.primaryButton(),
-              onPressed: _saving
-                  ? null
-                  : (_currentStep == 3 ? _finishSetup : _next),
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+            if (!isFirstStep) const SizedBox(width: AppSpacing.md),
+            Expanded(
+              flex: isFirstStep ? 1 : 1,
+              child: ElevatedButton(
+                style: AppWidgets.primaryButton(),
+                onPressed: _saving
+                    ? null
+                    : (isLastStep ? _finishSetup : _next),
+                child: _saving
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        isLastStep ? 'Finish Setup' : 'Next',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
                       ),
-                    )
-                  : Text(
-                      _currentStep == 3 ? 'Finish Setup' : 'Next',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -577,12 +571,12 @@ class TeamEditorData {
   }
 }
 
-class _StepCard extends StatelessWidget {
+class _OnboardingCard extends StatelessWidget {
   final String title;
   final String description;
   final List<Widget> children;
 
-  const _StepCard({
+  const _OnboardingCard({
     required this.title,
     required this.description,
     required this.children,
@@ -591,32 +585,40 @@ class _StepCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 600),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTextStyles.h1),
-          const SizedBox(height: AppSpacing.sm),
-          Text(description, style: AppTextStyles.body),
-          const SizedBox(height: AppSpacing.xl),
-          ...children,
-        ],
+      constraints: const BoxConstraints(maxWidth: 500),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: PremiumCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: AppTextStyles.headline),
+            const SizedBox(height: AppSpacing.sm),
+            Text(description, style: AppTextStyles.bodyMedium),
+            const SizedBox(height: AppSpacing.xl),
+            ...children,
+          ],
+        ),
       ),
     );
   }
 }
 
-class _InputField extends StatelessWidget {
+class _PremiumInputField extends StatelessWidget {
   final String label;
   final String? hint;
   final TextEditingController controller;
   final TextInputType? keyboardType;
+  final String? helperText;
+  final bool readOnly;
 
-  const _InputField({
+  const _PremiumInputField({
     required this.label,
     this.hint,
     required this.controller,
     this.keyboardType,
+    this.helperText,
+    this.readOnly = false,
   });
 
   @override
@@ -624,16 +626,23 @@ class _InputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.label),
+        Text(label.toUpperCase(), style: AppTextStyles.sectionLabel),
         const SizedBox(height: AppSpacing.sm),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          style: const TextStyle(fontSize: 16),
           decoration: AppWidgets.inputDecoration(
             label: '',
             hint: hint,
+            readOnly: readOnly,
           ),
         ),
+        if (helperText != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(helperText!, style: AppTextStyles.caption),
+        ],
       ],
     );
   }

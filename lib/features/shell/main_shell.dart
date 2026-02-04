@@ -37,7 +37,7 @@ class _MainShellState extends State<MainShell> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundBottom,
         body: IndexedStack(
           index: _selectedIndex,
           children: _pages,
@@ -45,18 +45,12 @@ class _MainShellState extends State<MainShell> {
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, -2),
-              ),
-            ],
+            boxShadow: AppShadows.bottomNav,
           ),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
+                horizontal: AppSpacing.xs,
                 vertical: AppSpacing.sm,
               ),
               child: Row(
@@ -119,7 +113,7 @@ class _NavItem extends StatelessWidget {
     required this.activeIcon,
     required this.label,
     required this.isSelected,
-    required this.onTap,
+  required this.onTap,
   });
 
   @override
@@ -134,7 +128,7 @@ class _NavItem extends StatelessWidget {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? AppColors.primaryLight : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(

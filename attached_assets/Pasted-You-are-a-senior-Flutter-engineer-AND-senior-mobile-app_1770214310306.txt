@@ -1,0 +1,153 @@
+You are a senior Flutter engineer AND senior mobile app designer.
+
+Context:
+You already implemented the new structure and it builds:
+- lib/core/theme/app_theme.dart (design system)
+- lib/features/onboarding/ (4-step onboarding)
+- lib/features/shell/ (bottom nav with 5 tabs)
+- “Home tab” screen with the 3 core actions (View Slots, Write URL, Clear URL)
+- placeholder tabs for Wristbands, Teams, Analytics, Account
+- onboardingComplete gating persisted (first login only)
+
+The flow and routing are DONE.
+Now we do ONE thing only: VISUAL DESIGN UPGRADE to premium WOW mobile app.
+
+Absolute constraints:
+1) DO NOT change logic, routing, onboarding gating, or any Firebase/Shopify/NFC handlers.
+2) DO NOT refactor or move folders again.
+3) DO NOT rename these core actions: View Slots, Write URL, Clear URL.
+4) DO NOT touch Shopify webhooks configuration.
+5) You must only restyle and improve UI/UX within the existing implemented screens.
+
+Brand colors:
+- Blue: #0075FD (primary)
+- Orange: #F75013 (accent)
+Use Blue for primary actions, Orange only as accent, highlights, destructive, and key badges.
+
+Design direction (must follow):
+Premium mobile SaaS + modern iOS/Android feel.
+Not web form.
+High contrast, clean spacing, soft depth, tasteful gradients, strong hierarchy.
+
+DESIGN SYSTEM SPEC (implement in app_theme + reusable widgets):
+A) Surfaces
+- Background: very light gradient using blue tint (top) to white (bottom). Example: start with #EAF3FF at top, fade to #FFFFFF.
+- Cards: pure white with soft shadow and large radius.
+- Radius: 20 for main cards, 16 for inputs, 999 for pill badges/buttons.
+- Shadow: subtle but visible (two-layer shadow, low opacity). No harsh borders.
+
+B) Typography
+- Headline (screen title): 28-32, bold, near-black (#0B1220).
+- Subtitle/description: 14-16, medium, cool gray (#5B677A).
+- Section labels: 12-13 uppercase or semibold, gray (#6B7688).
+- Input text: 16.
+- Button text: 16-17 semibold.
+
+C) Buttons
+- Primary button: FULL WIDTH, height 52-56, pill radius 999, solid Blue #0075FD, white text, subtle shadow.
+- Secondary button: outline Blue, transparent background, same height/radius.
+- Destructive button: Orange background OR orange outline (depending on context). Never purple.
+- Add buttons: use Blue outline with plus icon in Blue.
+- Disabled states: reduce opacity and remove shadow.
+
+D) Inputs
+- Use filled input style (light fill #F4F7FB) with Blue focus border.
+- Label above input (not placeholder-only).
+- Helper text smaller, gray.
+- Error text in Orange, with small icon.
+
+E) Components to create (if not already):
+- BrandedHeader (logo centered, bigger)
+- StepPill (top right, “Step X of 4”)
+- OnboardingCard (centered card container)
+- PrimaryCTA / SecondaryCTA
+- InfoBanner (for NFC not available)
+- StatCard (for Home tab summary cards)
+- ActionTile (for View Slots, Write URL, Clear URL)
+
+SCREEN-BY-SCREEN UI REQUIREMENTS
+
+1) ONBOARDING Step screens (keep ALL titles/descriptions EXACTLY as now)
+Layout:
+- Full screen gradient background.
+- Top area: centered big logo (not tiny, not left with black text). Logo should be the primary brand element.
+- Under logo: the main card centered with max width for web preview but designed mobile-first.
+- Step pill: top right floating pill inside safe area (Blue outline or light blue fill), not huge.
+- Card contains:
+  - Title
+  - Description
+  - Form fields
+  - CTA row (Back on left for steps 2-4, Next on right), or single Next full width on step 1.
+
+Step 1 of 4: Welcome & Initial Setup
+- Make it feel like a premium welcome screen.
+- “Next” must be Blue primary, full width on mobile.
+- The “slot count” field should look read-only if it is read-only (lock icon or subtle “auto” helper).
+
+Step 2 of 4: Define Your Wristbands
+- Each wristband row must be a mini-card or rounded field row:
+  - left: input
+  - right: remove icon button (Orange outline, circular)
+- “Add Another Wristband” must look like a premium add action:
+  - full width outline button, Blue border, plus icon, slight hover/press animation.
+
+Step 3 of 4: Define Your Teams and Members
+- Each team should appear as a card section with:
+  - Team name input
+  - Members list
+  - Add member button (outline Blue)
+- Make scrolling comfortable and avoid giant empty space.
+- Keep the suggestion box but style it as an InfoBanner (light blue background, blue icon).
+
+Step 4 of 4: Assign Wristbands & Set Profile URL
+- GBP URL input at top.
+- Assign list: each wristband row as a card row:
+  - left: wristband name
+  - right: dropdown pill
+- Warning “unassigned” must be a styled warning banner (light orange background, orange icon).
+- Final CTA: Blue primary, label must be premium (“Finish Setup” or “Go to Dashboard”). Not “Start Simulation”.
+
+2) HOME TAB (this is the new main screen after onboardingComplete)
+Important: This is NOT “old dashboard”. This is the Home tab you already created.
+Restyle it to premium:
+Top:
+- big centered logo or branded header, optional small greeting text.
+- show NFC info banner only when needed, styled premium.
+Middle:
+- 2-3 StatCards (Plan status, Available slots, Purchased total). Use icons, soft shadows, clean numbers.
+Bottom:
+- Three ActionTiles or big buttons for:
+  - View Slots (neutral dark card with blue accent)
+  - Write URL (primary Blue)
+  - Clear URL (Orange accent, destructive style)
+They must look like premium app controls, not three plain web buttons.
+
+3) Bottom Navigation
+- Must be clean, modern, with correct spacing.
+- Active icon/label in Blue, inactive in gray.
+- No burger menu anywhere.
+
+4) Placeholders (Wristbands, Teams, Analytics, Account)
+- Each should look like a real premium page shell:
+  - header, icon, “Coming soon” style content
+  - consistent spacing, not blank white pages.
+
+DO NOT DO:
+- No purple anywhere.
+- No tiny logo in corner with black “Reviews Everywhere” text.
+- No web-form look.
+- No re-architecture, no new flows, no rewriting logic.
+
+Acceptance check:
+- After restyle, run and confirm:
+  - onboarding still only first login
+  - subsequent logins go to Home tab
+  - View Slots, Write URL, Clear URL still work exactly
+  - colors are strictly #0075FD and #F75013 based, no purple
+
+Deliver output:
+- Commit only theme + widget style changes and screen layout polish.
+- Do not change business logic.
+```
+
+NO restructuring. Style-only pass. Do not move files. Do not change routing or logic.

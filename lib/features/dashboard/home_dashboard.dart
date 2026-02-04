@@ -82,7 +82,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             barrierDismissible: false,
             builder: (_) => AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               title: const Text('Scanning NFC Tag'),
               content: Column(
@@ -136,7 +136,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         title: Row(
           children: [
@@ -152,7 +152,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: const Text('OK', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -164,7 +164,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
       SnackBar(
         content: Text(msg),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: AppColors.textPrimary,
       ),
     );
   }
@@ -262,7 +263,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         title: Text(title),
         content: Column(
@@ -307,16 +308,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
   Widget build(BuildContext context) {
     final canUseNfc = _nfcAvailable || _simulatorMode;
 
-    return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildHeader()),
-          SliverToBoxAdapter(child: _buildAccountSummary()),
-          if (!_nfcAvailable && !_simulatorMode)
-            SliverToBoxAdapter(child: _buildNfcBanner()),
-          SliverToBoxAdapter(child: _buildActionCards(canUseNfc)),
-          SliverToBoxAdapter(child: const SizedBox(height: AppSpacing.xl)),
-        ],
+    return GradientBackground(
+      child: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader()),
+            SliverToBoxAdapter(child: _buildAccountSummary()),
+            if (!_nfcAvailable && !_simulatorMode)
+              SliverToBoxAdapter(child: _buildNfcBanner()),
+            SliverToBoxAdapter(child: _buildActionCards(canUseNfc)),
+            SliverToBoxAdapter(child: const SizedBox(height: AppSpacing.xl)),
+          ],
+        ),
       ),
     );
   }
@@ -324,36 +327,58 @@ class _HomeDashboardState extends State<HomeDashboard> {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
+      child: Column(
         children: [
-          Image.asset('assets/logo_1.png', width: 48, height: 48),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Reviews Everywhere',
-                  style: AppTextStyles.h3,
-                ),
-                Text(
-                  'Dashboard',
-                  style: AppTextStyles.caption,
-                ),
-              ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/logo_1.png', width: 56, height: 56),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Welcome back!',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
             ),
           ),
-          if (kDebugMode && !_nfcAvailable)
-            TextButton(
-              onPressed: () => setState(() => _simulatorMode = !_simulatorMode),
-              child: Text(
-                _simulatorMode ? 'SIM ON' : 'SIM OFF',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: _simulatorMode ? AppColors.green : AppColors.textMuted,
+          if (kDebugMode && !_nfcAvailable) ...[
+            const SizedBox(height: AppSpacing.sm),
+            GestureDetector(
+              onTap: () => setState(() => _simulatorMode = !_simulatorMode),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: _simulatorMode ? AppColors.greenLight : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: _simulatorMode ? AppColors.green : AppColors.border,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _simulatorMode ? Icons.check_circle : Icons.radio_button_unchecked,
+                      size: 16,
+                      color: _simulatorMode ? AppColors.green : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Simulator Mode',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _simulatorMode ? AppColors.green : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -363,7 +388,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     if (_loadingAccount) {
       return const Padding(
         padding: EdgeInsets.all(AppSpacing.lg),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
@@ -371,25 +396,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
     if (data == null) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: AppColors.orange.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.orange.withOpacity(0.2)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, color: AppColors.orange),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  'No account record found. This usually means Shopify has not processed your order yet.',
-                  style: TextStyle(fontSize: 13, color: AppColors.orange),
-                ),
-              ),
-            ],
-          ),
+        child: const InfoBanner(
+          message: 'No account record found. This usually means Shopify has not processed your order yet.',
+          icon: Icons.info_outline,
+          isWarning: true,
         ),
       );
     }
@@ -397,76 +407,62 @@ class _HomeDashboardState extends State<HomeDashboard> {
     final planStatus = (data['planStatus'] ?? '-').toString();
     final isActive = planStatus.toLowerCase() == 'active';
     final slotsAvailable = _asInt(data['slotsAvailable']);
-    final slotsUsed = _asInt(data['slotsUsed']);
-    final slotsNet = _asInt(data['slotsNet']);
     final slotsPurchased = _asInt(data['slotsPurchasedTotal']);
-    final slotsRefunded = _asInt(data['slotsRefundedTotal']);
-    final updatedAt = data['updatedAt'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: (isActive ? AppColors.greenLight : AppColors.accentLight),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isActive ? Icons.check_circle : Icons.warning_amber,
+                  size: 18,
+                  color: isActive ? AppColors.green : AppColors.orange,
                 ),
-                decoration: BoxDecoration(
-                  color: (isActive ? AppColors.green : AppColors.orange).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  border: Border.all(
-                    color: (isActive ? AppColors.green : AppColors.orange).withOpacity(0.3),
+                const SizedBox(width: 8),
+                Text(
+                  'Plan: $planStatus',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isActive ? AppColors.green : AppColors.orange,
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isActive ? Icons.check_circle : Icons.warning_amber,
-                      size: 16,
-                      color: isActive ? AppColors.green : AppColors.orange,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Plan: $planStatus',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isActive ? AppColors.green : AppColors.orange,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'Updated: ${_fmtTs(updatedAt)}',
-                style: AppTextStyles.caption,
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              Expanded(child: _StatCard(title: 'Available', value: '$slotsAvailable', color: AppColors.green)),
+              Expanded(
+                child: StatCard(
+                  title: 'Available',
+                  value: '$slotsAvailable',
+                  icon: Icons.confirmation_number_outlined,
+                  color: AppColors.green,
+                ),
+              ),
               const SizedBox(width: AppSpacing.md),
-              Expanded(child: _StatCard(title: 'Used', value: '$slotsUsed', color: AppColors.blue)),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: _StatCard(title: 'Net', value: '$slotsNet', color: AppColors.primary)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(child: _StatCard(title: 'Purchased', value: '$slotsPurchased', color: AppColors.textSecondary)),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: _StatCard(title: 'Refunded', value: '$slotsRefunded', color: AppColors.orange)),
-              const SizedBox(width: AppSpacing.md),
-              const Expanded(child: SizedBox()),
+              Expanded(
+                child: StatCard(
+                  title: 'Purchased',
+                  value: '$slotsPurchased',
+                  icon: Icons.shopping_bag_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
             ],
           ),
         ],
@@ -480,18 +476,24 @@ class _HomeDashboardState extends State<HomeDashboard> {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.red.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.red.withOpacity(0.2)),
+          color: AppColors.accentLight,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(
           children: [
-            Icon(Icons.nfc, color: AppColors.red, size: 24),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.nfc, color: AppColors.orange, size: 24),
+            ),
             const SizedBox(width: AppSpacing.md),
-            Expanded(
+            const Expanded(
               child: Text(
-                'NFC is not available on this device. Enable NFC in Settings (if supported) or use Simulator Mode in debug builds.',
-                style: TextStyle(fontSize: 13, color: AppColors.red, fontWeight: FontWeight.w500),
+                'NFC is not available on this device. Enable NFC in Settings or use Simulator Mode.',
+                style: TextStyle(fontSize: 13, color: AppColors.orange, fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -506,31 +508,33 @@ class _HomeDashboardState extends State<HomeDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quick Actions', style: AppTextStyles.h3),
+          Text('QUICK ACTIONS', style: AppTextStyles.sectionLabel),
           const SizedBox(height: AppSpacing.md),
-          _ActionCard(
+          ActionTile(
             icon: Icons.edit_note,
             title: 'Write URL',
             description: 'Program a wristband with a custom URL',
-            color: AppColors.blue,
+            color: AppColors.primary,
             onTap: canUseNfc ? _showEnterUrl : () => _snack('NFC not available'),
             enabled: canUseNfc,
+            isPrimary: true,
           ),
           const SizedBox(height: AppSpacing.md),
-          _ActionCard(
+          ActionTile(
             icon: Icons.delete_sweep,
             title: 'Clear URL',
             description: 'Remove the URL from a wristband',
             color: AppColors.orange,
             onTap: canUseNfc ? _showConfirmClear : () => _snack('NFC not available'),
             enabled: canUseNfc,
+            isDestructive: true,
           ),
           const SizedBox(height: AppSpacing.md),
-          _ActionCard(
+          ActionTile(
             icon: Icons.visibility,
             title: 'View Slots',
             description: 'See your account and slot details',
-            color: AppColors.primary,
+            color: AppColors.textPrimary,
             onTap: () => _loadAccountData().then((_) {
               if (_accountData != null) {
                 _showSlotsDialog();
@@ -561,7 +565,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         title: const Text('Account Overview'),
         content: SingleChildScrollView(
@@ -575,9 +579,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (isActive ? AppColors.green : AppColors.orange).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: isActive ? AppColors.green : AppColors.orange),
+                      color: (isActive ? AppColors.greenLight : AppColors.accentLight),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       planStatus,
@@ -613,7 +616,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Close', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -635,123 +638,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.card,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTextStyles.caption),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final Color color;
-  final VoidCallback onTap;
-  final bool enabled;
-
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.color,
-    required this.onTap,
-    required this.enabled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            boxShadow: AppShadows.card,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: enabled ? AppColors.textPrimary : AppColors.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: enabled ? AppColors.textSecondary : AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: enabled ? AppColors.textMuted : AppColors.border,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

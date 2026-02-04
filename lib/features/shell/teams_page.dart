@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:cards/core/theme/app_theme.dart';
 
 class TeamsPage extends StatelessWidget {
@@ -6,53 +7,72 @@ class TeamsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Teams', style: AppTextStyles.h1),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Manage your teams and team members.',
-              style: AppTextStyles.body,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Expanded(
-              child: Center(
+    return GradientBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  FluentIcons.people_24_filled,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const Text(
+                'Teams',
+                style: AppTextStyles.headline,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Organize your team members and groups',
+                style: AppTextStyles.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PremiumCard(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(
-                        Icons.groups,
-                        size: 40,
-                        color: AppColors.accent,
+                      child: const Icon(
+                        FluentIcons.sparkle_24_filled,
+                        size: 28,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'Team Management',
-                      style: AppTextStyles.h3,
+                    const SizedBox(height: AppSpacing.md),
+                    const Text(
+                      'Coming Soon',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'View and manage your teams.\nThis feature is coming soon.',
+                      'Manage your teams, add new members, and track individual performance metrics.',
                       style: AppTextStyles.body,
                       textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

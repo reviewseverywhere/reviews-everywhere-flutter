@@ -1,0 +1,79 @@
+You are the senior Flutter engineer + senior mobile app designer for this project.
+
+Context (do not change):
+- Login is already working (email/password). Social login is out of scope for now.
+- Shopify webhooks + Firebase entitlement sync already exist and must NOT be changed.
+- Onboarding is POST-login only.
+- Keep all existing backend logic and Firebase/Shopify calls intact.
+- This task is about ONBOARDING LOGIC correctness (Master V3), not redesign.
+
+Reference images:
+- Use onboard1, onboard2, onboard3, onboard4 ONLY to confirm labels and step structure (Step X of 4).
+- Keep titles and descriptions exactly the same as current onboarding screens.
+
+CRITICAL REQUIREMENT: Block navigation unless valid.
+For ALL steps (1 to 4):
+- The “Next” button must be disabled (or blocked) until the step is valid.
+- If user taps Next while invalid, show a clear inline error + optional snackbar.
+- This must be enforced in code, not only visually.
+
+Step 1 of 4: Welcome & Initial Setup
+Fields:
+1) Your Name (Purchaser)  [required]
+2) Number of Initial Wristband Slots  [required, integer]
+Validation rules:
+- Purchaser name: required, min 2 chars, trimmed, no empty/whitespace.
+- Slot count: required, integer, min 1, max = purchased/available slots if that value exists in current state.
+  If the purchased slot limit is known from entitlement data, cap it.
+  If not known, cap at a safe UI max (e.g. 50) but ALWAYS store the value and enforce it later.
+On Next:
+- Persist purchaserName and maxWristbands (slot count) to the onboarding state.
+
+Step 2 of 4: Define Your Wristbands
+Core rule from Master V3:
+- The number of wristbands CANNOT exceed maxWristbands defined in Step 1.
+Implementation:
+- Initialize the list with EXACTLY maxWristbands rows (pre-created).
+- Each row has a name input.
+- User may remove a row ONLY if your business logic allows fewer than max (if not allowed, disable remove).
+- The “Add Another Wristband” action MUST NOT allow creating more than maxWristbands.
+  If wristbands.length == maxWristbands, disable/hide Add.
+Validation rules (blocking Next):
+- Every wristband row must have a non-empty name (trimmed), min 2 chars.
+- Names must be unique (case-insensitive trim compare).
+- Next is enabled only when all rows are valid.
+
+Step 3 of 4: Define Your Teams and Members
+Validation rules (blocking Next):
+- Must have at least 1 team.
+- Each team must have a non-empty Team Name (trimmed, min 2 chars).
+- Across all teams combined, must have at least 2 members total (as stated).
+- Each member name required (trimmed, min 2 chars).
+- Member names should be unique within a team (case-insensitive).
+- If the current code supports multiple teams, keep it. If it only supports one team, enforce one team but still validate members.
+- Next enabled only when rules are satisfied.
+
+Step 4 of 4: Assign Wristbands & Set Profile URL
+Validation rules (blocking final CTA):
+- Google Business Profile URL is required.
+- Must be a valid URL format (basic URL validation).
+- Every wristband must be assigned OR you must block completion when any are unassigned.
+  If unassigned exists, show warning AND block completion.
+- Final CTA label must NOT be “Start Simulation”. Keep the improved label currently used (e.g. Finish Setup / Go to Dashboard).
+On Finish:
+- Persist onboardingComplete = true (same place it is currently saved).
+- Navigate to dashboard.
+
+Global:
+- Step pill “Step X of 4” must always be single line (no wrapping) for all steps 1-4.
+- Fix any current bug where Step 1 allows Next without required fields.
+- Fix any current bug where Step 2 allows more wristbands than Step 1.
+- Do NOT touch dashboard actions logic (View Slots / Write URL / Clear URL).
+- After implementing, run the app and test these cases:
+  A) Step 1 empty name => Next blocked
+  B) Step 1 slots=3 => Step 2 cannot exceed 3 rows
+  C) Step 2 any empty wristband => Next blocked
+  D) Step 3 fewer than 2 members overall => Next blocked
+  E) Step 4 invalid URL => Finish blocked
+  F) Step 4 any unassigned wristband => Finish blocked
+Only then consider this task complete.

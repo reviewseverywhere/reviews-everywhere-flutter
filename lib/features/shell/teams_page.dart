@@ -27,7 +27,7 @@ class TeamsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              const Text(
+              Text(
                 'Teams',
                 style: AppTextStyles.headline,
               ),

@@ -1,0 +1,72 @@
+You are a SENIOR Flutter engineer AND a SENIOR mobile app designer.
+
+CONTEXT (READ FIRST):
+- The 4-step onboarding flow ALREADY EXISTS and IS WORKING.
+- All logic, routing, Firestore writes, add/remove actions, and validation are already implemented.
+- DO NOT change logic, step order, fields, or data handling.
+- Your task is DESIGN ONLY: a FULL VISUAL OVERHAUL of the existing onboarding UI.
+
+ABSOLUTE CONSTRAINTS:
+1) KEEP all onboarding titles, descriptions, labels, and step names EXACTLY as they are.
+2) KEEP the 4 steps exactly as they are (Step 1 to Step 4).
+3) DO NOT add or remove fields.
+4) DO NOT change buttons behavior or routing.
+5) DO NOT touch backend, Firebase, or Shopify webhooks.
+
+BRAND IDENTITY (MANDATORY):
+- Primary Blue: #0075FD
+- Primary Orange: #F75013
+- Clean white base, premium SaaS mobile style
+- NO purple, NO default Material look
+
+TYPOGRAPHY (MANDATORY):
+- Headings, titles, section headers:
+  Raleway, weight 700
+- Buttons and CTAs:
+  Montserrat, weight 400
+- Body text: modern sans, clean, readable, premium spacing
+
+LOGO (MANDATORY, VERY SPECIFIC):
+- Make the logo BIG and prominent.
+- Target: logo width about 180 to 240 px on mobile (or visually equivalent), not tiny.
+- Place it centered at the top as a hero brand element.
+- DO NOT add “Reviews Everywhere” black text next to it.
+- The top header must feel like a real premium app brand, not a website navbar.
+
+STEP INDICATOR (MANDATORY, FOR ALL STEPS):
+- The step indicator must ALWAYS be a single-line pill/badge.
+- It must show exactly:
+  Step 1 of 4
+  Step 2 of 4
+  Step 3 of 4
+  Step 4 of 4
+- It must NEVER wrap to two lines.
+- Ensure enough horizontal padding and min-width so it never breaks on any screen size.
+- Place it top-right or top area, but always readable and premium.
+
+DESIGN GOAL:
+This must look like a PREMIUM, WOW mobile app.
+Not a colored form.
+Use:
+- large rounded cards
+- elegant shadows
+- strong hierarchy
+- generous spacing
+- premium input fields (padding, rounded corners, subtle borders)
+- high-quality primary CTA button (bold, full-width, blue)
+- consistent spacing system (8/12/16/24/32)
+
+PROTOTYPE IMAGES:
+- Reference images exist:
+  onboard1
+  onboard2
+  onboard3
+  onboard4
+- They define FLOW and COMPONENTS ONLY.
+- DO NOT copy their visual style.
+- Your design must be clearly more premium than those references.
+
+QUALITY BAR (NON-NEGOTIABLE):
+If the result still looks like a basic web form with colors, it is FAILED.
+Proceed with a DESIGN-ONLY overhaul of the existing 4 onboarding screens.
+Do not change logic, only UI.

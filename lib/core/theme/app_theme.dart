@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const primary = Color(0xFF0075FD);
@@ -88,78 +89,84 @@ class AppShadows {
 }
 
 class AppTextStyles {
-  static const headline = TextStyle(
-    fontSize: 30,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-    height: 1.2,
-    letterSpacing: -0.5,
-  );
-
-  static const h1 = TextStyle(
+  static TextStyle get headline => GoogleFonts.raleway(
     fontSize: 28,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
-    height: 1.2,
-    letterSpacing: -0.5,
+    height: 1.25,
+    letterSpacing: -0.3,
+  );
+
+  static TextStyle get h1 => GoogleFonts.raleway(
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.25,
+    letterSpacing: -0.3,
   );
   
-  static const h2 = TextStyle(
+  static TextStyle get h2 => GoogleFonts.raleway(
     fontSize: 22,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     height: 1.3,
   );
   
-  static const h3 = TextStyle(
+  static TextStyle get h3 => GoogleFonts.raleway(
     fontSize: 18,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
   );
   
-  static const body = TextStyle(
+  static TextStyle get body => GoogleFonts.inter(
     fontSize: 15,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
-    height: 1.5,
+    height: 1.6,
   );
 
-  static const bodyMedium = TextStyle(
+  static TextStyle get bodyMedium => GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
-    height: 1.5,
+    height: 1.55,
   );
   
-  static const bodyBold = TextStyle(
+  static TextStyle get bodyBold => GoogleFonts.inter(
     fontSize: 15,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
   
-  static const caption = TextStyle(
+  static TextStyle get caption => GoogleFonts.inter(
     fontSize: 13,
     fontWeight: FontWeight.w500,
     color: AppColors.textMuted,
   );
 
-  static const sectionLabel = TextStyle(
+  static TextStyle get sectionLabel => GoogleFonts.raleway(
     fontSize: 12,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: AppColors.textMuted,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   );
   
-  static const button = TextStyle(
+  static TextStyle get button => GoogleFonts.montserrat(
     fontSize: 16,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     letterSpacing: 0.3,
   );
   
-  static const label = TextStyle(
+  static TextStyle get label => GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,
+  );
+
+  static TextStyle get stepPill => GoogleFonts.montserrat(
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    color: AppColors.primary,
   );
 }
 
@@ -358,22 +365,29 @@ class StepPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(minWidth: 100),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: 16,
+        vertical: 10,
       ),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         'Step $currentStep of $totalSteps',
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
-        ),
+        style: AppTextStyles.stepPill,
+        maxLines: 1,
+        overflow: TextOverflow.visible,
+        textAlign: TextAlign.center,
       ),
     );
   }

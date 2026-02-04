@@ -27,7 +27,7 @@ class WristbandsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              const Text(
+              Text(
                 'Wristbands',
                 style: AppTextStyles.headline,
               ),

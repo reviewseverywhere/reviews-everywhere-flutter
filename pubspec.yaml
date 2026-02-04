@@ -30,6 +30,7 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_web_auth_2: ^4.1.0
   crypto: ^3.0.3
+  google_fonts: ^6.2.1
 
   # ✅ Required for deep link listening (Shopify email login callback -> app)
   app_links: ^6.3.2

@@ -167,20 +167,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.xl, AppSpacing.lg, AppSpacing.lg),
+      child: Column(
         children: [
-          const SizedBox(width: 80),
-          Image.asset('assets/logo_1.png', width: 64, height: 64),
-          SizedBox(
-            width: 80,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: StepPill(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              StepPill(
                 currentStep: _currentStep + 1,
                 totalSteps: 4,
               ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Center(
+            child: Image.asset(
+              'assets/logo_1.png',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
             ),
           ),
         ],
@@ -232,26 +237,48 @@ class _OnboardingPageState extends State<OnboardingPage> {
       children: [
         ...List.generate(_wristbandControllers.length, (i) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            padding: const EdgeInsets.only(bottom: 14),
             child: Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(AppRadius.input),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${i + 1}',
+                        style: AppTextStyles.bodyBold.copyWith(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _wristbandControllers[i],
                       decoration: InputDecoration(
-                        hintText: 'Wristband ${i + 1} (e.g., Lobby Band)',
+                        hintText: 'Wristband name (e.g., Lobby Band)',
                         hintStyle: AppTextStyles.caption,
                         filled: false,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      style: const TextStyle(fontSize: 16),
+                      style: AppTextStyles.bodyBold.copyWith(fontSize: 16),
                     ),
                   ),
                   if (_wristbandControllers.length > 1)
@@ -260,10 +287,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       height: 36,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.orange, width: 1.5),
+                        color: AppColors.accentLight,
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.close, color: AppColors.orange, size: 18),
+                        icon: const Icon(Icons.close_rounded, color: AppColors.orange, size: 18),
                         padding: EdgeInsets.zero,
                         onPressed: () {
                           setState(() {
@@ -278,16 +305,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           );
         }),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton.icon(
-          onPressed: () {
-            setState(() {
-              _wristbandControllers.add(TextEditingController());
-            });
-          },
-          icon: const Icon(Icons.add, color: AppColors.primary),
-          label: const Text('Add Another Wristband'),
-          style: AppWidgets.outlineButton(),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          height: 52,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+          ),
+          child: TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _wristbandControllers.add(TextEditingController());
+              });
+            },
+            icon: const Icon(Icons.add_rounded, color: AppColors.primary, size: 20),
+            label: Text(
+              'Add Another Wristband',
+              style: AppTextStyles.button.copyWith(color: AppColors.primary),
+            ),
+          ),
         ),
       ],
     );
@@ -298,11 +335,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: 'Define Your Teams and Members',
       description: "Who will be using these wristbands? Organize your team members into teams. You need at least 2 members overall to start.",
       children: [
-        const InfoBanner(
-          message: 'Suggestion: Consider one team for all members, or two smaller teams (1-2 members each).',
-          icon: Icons.lightbulb_outline,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.lightbulb_outline, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Suggestion: Consider one team for all members, or two smaller teams (1-2 members each).',
+                  style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: 24),
         ...List.generate(_teams.length, (ti) => _buildTeamEditor(ti)),
       ],
     );
@@ -311,40 +370,87 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget _buildTeamEditor(int teamIndex) {
     final team = _teams[teamIndex];
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: AppShadows.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('TEAM NAME', style: AppTextStyles.sectionLabel),
-          const SizedBox(height: AppSpacing.sm),
-          TextField(
-            controller: team.nameController,
-            decoration: AppWidgets.inputDecoration(
-              label: '',
-              hint: 'My First Team',
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            style: const TextStyle(fontSize: 16),
+            child: TextField(
+              controller: team.nameController,
+              style: AppTextStyles.bodyBold.copyWith(fontSize: 16),
+              decoration: InputDecoration(
+                hintText: 'My First Team',
+                hintStyle: AppTextStyles.caption,
+                filled: true,
+                fillColor: AppColors.surfaceVariant,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: 20),
           Text('TEAM MEMBERS', style: AppTextStyles.sectionLabel),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 10),
           ...List.generate(team.memberControllers.length, (mi) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.only(bottom: 10),
               child: Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.person_outline, color: AppColors.primary, size: 18),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         controller: team.memberControllers[mi],
@@ -353,21 +459,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           hintStyle: AppTextStyles.caption,
                           filled: false,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        style: const TextStyle(fontSize: 16),
+                        style: AppTextStyles.bodyBold.copyWith(fontSize: 16),
                       ),
                     ),
                     if (team.memberControllers.length > 1)
                       Container(
-                        width: 36,
-                        height: 36,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.orange, width: 1.5),
+                          color: AppColors.accentLight,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.orange, size: 18),
+                          icon: const Icon(Icons.close_rounded, color: AppColors.orange, size: 16),
                           padding: EdgeInsets.zero,
                           onPressed: () {
                             setState(() {
@@ -382,15 +488,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             );
           }),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () {
               setState(() {
                 team.memberControllers.add(TextEditingController());
               });
             },
-            icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
-            label: const Text('Add Member', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+            icon: const Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+            label: Text(
+              'Add Member',
+              style: AppTextStyles.button.copyWith(color: AppColors.primary, fontSize: 14),
+            ),
           ),
         ],
       ),
@@ -416,55 +525,94 @@ class _OnboardingPageState extends State<OnboardingPage> {
           controller: _gbpUrlController,
           helperText: 'This URL will be linked to all wristbands assigned to a team member.',
         ),
-        const SizedBox(height: AppSpacing.xl),
+        const SizedBox(height: 28),
         Text('ASSIGN WRISTBANDS', style: AppTextStyles.sectionLabel),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 14),
         if (wristbands.isEmpty)
-          const InfoBanner(
-            message: 'No wristbands defined. Go back to Step 2.',
-            icon: Icons.info_outline,
-            isWarning: true,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.accentLight,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.info_outline, color: AppColors.orange, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'No wristbands defined. Go back to Step 2.',
+                    style: AppTextStyles.caption.copyWith(color: AppColors.orange),
+                  ),
+                ),
+              ],
+            ),
           )
         else
           ...wristbands.map((entry) {
             final idx = entry.key;
             final name = entry.value.text.trim();
             return Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-              padding: const EdgeInsets.all(AppSpacing.md),
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.watch, color: AppColors.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: Text(name, style: AppTextStyles.bodyBold),
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: 12),
                   Expanded(
                     flex: 3,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _wristbandAssignments[idx],
                           isExpanded: true,
-                          hint: const Text('Unassigned', style: TextStyle(color: AppColors.textMuted)),
+                          hint: Text('Unassigned', style: AppTextStyles.caption),
+                          style: AppTextStyles.bodyBold.copyWith(fontSize: 14),
                           items: [
-                            const DropdownMenuItem(
+                            DropdownMenuItem(
                               value: null,
-                              child: Text('Unassigned'),
+                              child: Text('Unassigned', style: AppTextStyles.caption),
                             ),
                             ...members.map((m) => DropdownMenuItem(
                               value: m,
-                              child: Text(m),
+                              child: Text(m, style: AppTextStyles.bodyBold.copyWith(fontSize: 14)),
                             )),
                           ],
                           onChanged: (v) {
@@ -481,11 +629,32 @@ class _OnboardingPageState extends State<OnboardingPage> {
             );
           }),
         if (unassigned > 0) ...[
-          const SizedBox(height: AppSpacing.md),
-          InfoBanner(
-            message: 'You still have $unassigned wristband(s) unassigned.',
-            icon: Icons.warning_amber,
-            isWarning: true,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.accentLight,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.warning_amber_rounded, color: AppColors.orange, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'You still have $unassigned wristband(s) unassigned.',
+                    style: AppTextStyles.caption.copyWith(color: AppColors.orange, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ],
@@ -497,14 +666,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final isLastStep = _currentStep == 3;
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
@@ -514,37 +683,71 @@ class _OnboardingPageState extends State<OnboardingPage> {
           children: [
             if (!isFirstStep)
               Expanded(
-                child: OutlinedButton(
-                  onPressed: _back,
-                  style: AppWidgets.secondaryButton(),
-                  child: const Text('Back'),
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.primary, width: 2),
+                  ),
+                  child: TextButton(
+                    onPressed: _back,
+                    style: TextButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    child: Text(
+                      'Back',
+                      style: AppTextStyles.button.copyWith(color: AppColors.primary),
+                    ),
+                  ),
                 ),
               ),
-            if (!isFirstStep) const SizedBox(width: AppSpacing.md),
+            if (!isFirstStep) const SizedBox(width: 16),
             Expanded(
-              flex: isFirstStep ? 1 : 1,
-              child: ElevatedButton(
-                style: AppWidgets.primaryButton(),
-                onPressed: _saving
-                    ? null
-                    : (isLastStep ? _finishSetup : _next),
-                child: _saving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.9),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  onPressed: _saving
+                      ? null
+                      : (isLastStep ? _finishSetup : _next),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          isLastStep ? 'Finish Setup' : 'Next',
+                          style: AppTextStyles.button.copyWith(color: Colors.white),
                         ),
-                      )
-                    : Text(
-                        isLastStep ? 'Finish Setup' : 'Next',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
+                ),
               ),
             ),
           ],
@@ -586,16 +789,32 @@ class _OnboardingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 500),
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      child: PremiumCard(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 32,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: AppTextStyles.headline),
-            const SizedBox(height: AppSpacing.sm),
-            Text(description, style: AppTextStyles.bodyMedium),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 12),
+            Text(description, style: AppTextStyles.body),
+            const SizedBox(height: 28),
             ...children,
           ],
         ),
@@ -627,20 +846,52 @@ class _PremiumInputField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label.toUpperCase(), style: AppTextStyles.sectionLabel),
-        const SizedBox(height: AppSpacing.sm),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          readOnly: readOnly,
-          style: const TextStyle(fontSize: 16),
-          decoration: AppWidgets.inputDecoration(
-            label: '',
-            hint: hint,
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
             readOnly: readOnly,
+            style: AppTextStyles.bodyBold.copyWith(fontSize: 16),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.caption,
+              filled: true,
+              fillColor: AppColors.surfaceVariant,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 18,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
+              suffixIcon: readOnly
+                  ? const Icon(Icons.lock_outline, size: 18, color: AppColors.textMuted)
+                  : null,
+            ),
           ),
         ),
         if (helperText != null) ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 10),
           Text(helperText!, style: AppTextStyles.caption),
         ],
       ],

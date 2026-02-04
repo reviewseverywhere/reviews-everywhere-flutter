@@ -27,7 +27,7 @@ class AnalyticsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              const Text(
+              Text(
                 'Analytics',
                 style: AppTextStyles.headline,
               ),

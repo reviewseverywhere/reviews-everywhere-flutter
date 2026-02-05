@@ -197,7 +197,8 @@ async function shopifyOrderPaidHandler(req, res) {
     // ⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION
     console.log('⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION');
     console.log('='.repeat(60));
-    console.log('FULL WEBHOOK PAYLOAD:', JSON.stringify(rawBody, null, 2));
+    console.log('RAW req.body:', req.body);
+    console.log('FULL WEBHOOK PAYLOAD (formatted):', JSON.stringify(rawBody, null, 2));
     console.log('='.repeat(60));
     console.log('EXTRACTED IDS:');
     console.log('  order.id:', order?.id ?? rawBody?.id ?? 'MISSING');

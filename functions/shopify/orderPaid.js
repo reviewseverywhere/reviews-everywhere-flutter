@@ -194,6 +194,30 @@ async function shopifyOrderPaidHandler(req, res) {
     const order = normalizeOrderFromWebhook(rawBody);
     const { orderId, customerId, email } = extractIds(order, rawBody);
 
+    // ⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION
+    console.log('⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION');
+    console.log('='.repeat(60));
+    console.log('FULL WEBHOOK PAYLOAD:', JSON.stringify(rawBody, null, 2));
+    console.log('='.repeat(60));
+    console.log('EXTRACTED IDS:');
+    console.log('  order.id:', order?.id ?? rawBody?.id ?? 'MISSING');
+    console.log('  customer.id:', order?.customer?.id ?? rawBody?.customer?.id ?? 'MISSING');
+    console.log('  customer.email:', order?.customer?.email ?? rawBody?.customer?.email ?? 'MISSING');
+    console.log('='.repeat(60));
+    console.log('LINE ITEMS COUNT:', Array.isArray(order?.line_items) ? order.line_items.length : 0);
+    if (Array.isArray(order?.line_items)) {
+      order.line_items.forEach((li, idx) => {
+        console.log(`LINE ITEM [${idx}]:`);
+        console.log('  title:', li?.title ?? 'MISSING');
+        console.log('  quantity:', li?.quantity ?? 'MISSING');
+        console.log('  variant_title:', li?.variant_title ?? 'MISSING');
+        console.log('  properties:', JSON.stringify(li?.properties ?? [], null, 2));
+      });
+    }
+    console.log('='.repeat(60));
+    console.log('⚠️ END TEMP DEBUG');
+    // ⚠️ END TEMP SHOPIFY WEBHOOK DEBUG
+
     lock = await acquireWebhookLock(req, {
       topic: 'orders/paid',
       orderId: orderId || null,

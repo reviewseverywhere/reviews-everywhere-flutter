@@ -192,6 +192,18 @@ async function shopifyOrderPaidHandler(req, res) {
 
     const rawBody = req.body || {};
     const order = normalizeOrderFromWebhook(rawBody);
+
+    console.log('DEBUG ORDER LINE ITEMS RAW:', JSON.stringify(order.line_items, null, 2));
+
+    for (const li of order.line_items || []) {
+      console.log('DEBUG LINE ITEM:', {
+        id: li.id,
+        variant_id: li.variant_id,
+        quantity: li.quantity,
+        properties: li.properties,
+      });
+    }
+
     const { orderId, customerId, email } = extractIds(order, rawBody);
 
     // ⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION

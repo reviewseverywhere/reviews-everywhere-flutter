@@ -1,0 +1,113 @@
+You are a **senior Flutter engineer and senior backend engineer** working on the existing Reviews Everywhere app.
+
+IMPORTANT CONTEXT (READ CAREFULLY):
+
+* Authentication, login, and entitlements already exist and MUST be reused.
+* The old black **“View Slots”** button was correctly removed from the UI, but **its underlying data logic MUST be reused**, not replaced.
+* The new 4-step onboarding UI already exists and MUST NOT be redesigned.
+* Your task is **DATA + LOGIC ONLY**, not visual work.
+
+---
+
+## OBJECTIVE
+
+Fix the **Shopify → Webhook → Firebase (Firestore) entitlement sync**, then correctly **prefill Step 1 of onboarding** using the real purchased data.
+
+---
+
+## CRITICAL REQUIREMENTS
+
+### 1. SOURCE OF TRUTH
+
+* **Shopify is the source of truth** for purchases.
+* Firebase (Firestore) must accurately reflect what was purchased in Shopify.
+* Flutter must only READ from Firebase, never guess values.
+
+---
+
+### 2. FIREBASE DATA VERIFICATION (MANDATORY)
+
+Inspect the existing Firestore document under:
+
+```
+accounts/{shopifyCustomerId}
+```
+
+Verify and document:
+
+* Which webhook populates this document
+* Which Shopify event is used (order paid / fulfilled / reconciled)
+* Why `slotsNet`, `slotsAvailable`, and `slotsPurchasedTotal` currently show incorrect values
+
+DO NOT assume values are correct just because the document exists.
+
+---
+
+### 3. SHOPIFY WEBHOOK FIX (CORE TASK)
+
+Fix the Shopify webhook logic so that:
+
+* Purchasing **“Wristband – Pack of 5”** correctly results in:
+
+  * `slotsPurchasedTotal = quantity × pack_size`
+  * `slotsNet` reflects total usable slots
+  * `slotsAvailable = slotsNet - slotsUsed`
+* Refunds, cancellations, or changes adjust values correctly
+* No hardcoded numbers
+* No manual overrides
+* Idempotent logic (same webhook can fire twice safely)
+
+---
+
+### 4. STEP 1 ONBOARDING PREFILL (AFTER WEBHOOK IS FIXED)
+
+When Step 1 loads:
+
+* Fetch data using the **same function/data source that previously powered “View Slots”**
+* Prefill:
+
+  * **Purchaser Name** → from Shopify customer name (or stored account name)
+  * **Number of Initial Wristband Slots** → from `slotsNet`
+* Fields MUST:
+
+  * Be prefilled automatically
+  * Remain editable by the user
+  * Never default to empty or `1` unless that is the real entitlement
+
+NO mock data
+NO placeholders
+NO fallback guesses
+
+---
+
+### 5. VALIDATION RULES (DO NOT CHANGE UI)
+
+Ensure logic only:
+
+* Step 1 “Next” is disabled until:
+
+  * Purchaser name is valid
+  * Slot count is valid and ≤ purchased slots
+* Step 2:
+
+  * Wristband rows MUST equal the number selected in Step 1
+  * User CANNOT add more than allowed slots
+* Step sync MUST update correctly if user goes back and changes slot count
+
+---
+
+### 6. DEBUGGING (TEMPORARY, REQUIRED)
+
+Add a **temporary debug panel** (clearly marked for removal) showing:
+
+* Logged-in auth UID
+* Shopify customer ID
+* Firestore account document path
+* Raw values for:
+
+  * slotsPurchasedTotal
+  * slotsNet
+  * slotsAvailable
+* Prefilled values used in Step 1
+
+This is for verification only and MUST be removable cleanly.

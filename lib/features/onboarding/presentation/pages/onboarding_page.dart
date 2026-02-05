@@ -17,6 +17,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool _saving = false;
   bool _loadingAccountData = true;
   
+  // ========== TEMPORARY DEBUG STATE (REMOVE AFTER VERIFICATION) ==========
+  String? _debugAuthUid;
+  String? _debugAuthEmail;
+  String? _debugFirestorePath;
+  bool? _debugDocExists;
+  List<String>? _debugDocKeys;
+  Map<String, dynamic>? _debugRawData;
+  String? _debugPurchaserNameValue;
+  String? _debugSlotCountValue;
+  String? _debugErrorMessage;
+  // ========== END DEBUG STATE ==========
+  
   // Validation state
   String? _step1Error;
   String? _step2Error;
@@ -74,50 +86,94 @@ class _OnboardingPageState extends State<OnboardingPage> {
   /// Loads existing account data and prefills Step 1 fields
   Future<void> _loadAccountData() async {
     try {
-      final doc = await _getAccountDoc();
+      // ========== DEBUG: Capture auth info ==========
+      final currentUser = FirebaseAuth.instance.currentUser;
+      _debugAuthUid = currentUser?.uid ?? 'NULL';
+      _debugAuthEmail = currentUser?.email ?? 'NULL';
       
-      if (doc != null && doc.exists) {
-        final data = doc.data() ?? {};
-        
-        // Extract purchaser name (try displayName first, then firstName + lastName)
-        String purchaserName = '';
-        if (data['displayName'] != null && data['displayName'].toString().trim().isNotEmpty) {
-          purchaserName = data['displayName'].toString().trim();
-        } else {
-          final firstName = (data['firstName'] ?? '').toString().trim();
-          final lastName = (data['lastName'] ?? '').toString().trim();
-          purchaserName = '$firstName $lastName'.trim();
-        }
-        
-        // Extract slots (use slotsNet as the purchased entitlement count)
-        int slots = 10; // default fallback
-        if (data['slotsNet'] != null) {
-          final parsed = int.tryParse(data['slotsNet'].toString());
-          if (parsed != null && parsed > 0 && parsed <= 50) {
-            slots = parsed;
-          }
-        } else if (data['slotsAvailable'] != null) {
-          final parsed = int.tryParse(data['slotsAvailable'].toString());
-          if (parsed != null && parsed > 0 && parsed <= 50) {
-            slots = parsed;
-          }
-        } else if (data['slotsPurchasedTotal'] != null) {
-          final parsed = int.tryParse(data['slotsPurchasedTotal'].toString());
-          if (parsed != null && parsed > 0 && parsed <= 50) {
-            slots = parsed;
-          }
-        }
-        
-        // Prefill controllers
-        if (purchaserName.isNotEmpty) {
-          _purchaserNameController.text = purchaserName;
-        }
-        _slotsController.text = slots.toString();
-        _maxWristbands = slots;
+      final email = currentUser?.email?.trim().toLowerCase();
+      _debugFirestorePath = email != null 
+          ? "accounts WHERE shopifyEmail == '$email' LIMIT 1"
+          : "NO EMAIL - CANNOT QUERY";
+      
+      if (email == null || email.isEmpty) {
+        _debugDocExists = false;
+        _debugDocKeys = [];
+        _debugErrorMessage = 'No email from FirebaseAuth.currentUser';
+        if (mounted) setState(() => _loadingAccountData = false);
+        return;
       }
-    } catch (e) {
+      
+      // Fetch document using same logic as View Slots
+      final q = await FirebaseFirestore.instance
+          .collection('accounts')
+          .where('shopifyEmail', isEqualTo: email)
+          .limit(1)
+          .get();
+      
+      if (q.docs.isEmpty) {
+        _debugDocExists = false;
+        _debugDocKeys = [];
+        _debugErrorMessage = 'Query returned 0 documents';
+        if (mounted) setState(() => _loadingAccountData = false);
+        return;
+      }
+      
+      final doc = q.docs.first;
+      _debugDocExists = doc.exists;
+      _debugFirestorePath = 'accounts/${doc.id}';
+      
+      final data = doc.data();
+      _debugDocKeys = data.keys.toList()..sort();
+      _debugRawData = data;
+      
+      // Extract purchaser name (try displayName first, then firstName + lastName)
+      String purchaserName = '';
+      if (data['displayName'] != null && data['displayName'].toString().trim().isNotEmpty) {
+        purchaserName = data['displayName'].toString().trim();
+      } else {
+        final firstName = (data['firstName'] ?? '').toString().trim();
+        final lastName = (data['lastName'] ?? '').toString().trim();
+        purchaserName = '$firstName $lastName'.trim();
+      }
+      _debugPurchaserNameValue = purchaserName.isEmpty ? '(empty string)' : purchaserName;
+      
+      // Extract slots (use slotsNet as the purchased entitlement count)
+      int slots = 10; // default fallback
+      String slotSource = 'default (10)';
+      if (data['slotsNet'] != null) {
+        final parsed = int.tryParse(data['slotsNet'].toString());
+        if (parsed != null && parsed > 0 && parsed <= 50) {
+          slots = parsed;
+          slotSource = 'slotsNet: ${data['slotsNet']}';
+        }
+      } else if (data['slotsAvailable'] != null) {
+        final parsed = int.tryParse(data['slotsAvailable'].toString());
+        if (parsed != null && parsed > 0 && parsed <= 50) {
+          slots = parsed;
+          slotSource = 'slotsAvailable: ${data['slotsAvailable']}';
+        }
+      } else if (data['slotsPurchasedTotal'] != null) {
+        final parsed = int.tryParse(data['slotsPurchasedTotal'].toString());
+        if (parsed != null && parsed > 0 && parsed <= 50) {
+          slots = parsed;
+          slotSource = 'slotsPurchasedTotal: ${data['slotsPurchasedTotal']}';
+        }
+      }
+      _debugSlotCountValue = '$slots (from $slotSource)';
+      
+      // Prefill controllers
+      if (purchaserName.isNotEmpty) {
+        _purchaserNameController.text = purchaserName;
+      }
+      _slotsController.text = slots.toString();
+      _maxWristbands = slots;
+      
+      debugPrint('[Onboarding] Prefilled: name="$purchaserName", slots=$slots');
+    } catch (e, st) {
       debugPrint('[Onboarding] Error loading account data: $e');
-      // Continue with default values on error
+      debugPrint('[Onboarding] Stack: $st');
+      _debugErrorMessage = e.toString();
     } finally {
       if (mounted) {
         setState(() {
@@ -644,6 +700,49 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: 'Welcome & Initial Setup',
       description: "Welcome! Let's get your Reviews Everywhere dashboard set up. We'll start with some basic information.",
       children: [
+        // ========== TEMPORARY DEBUG CARD (REMOVE AFTER VERIFICATION) ==========
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.yellow.shade100,
+            border: Border.all(color: Colors.orange, width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '⚠️ TEMPORARY DEBUG (REMOVE AFTER VERIFICATION)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red),
+              ),
+              const Divider(),
+              const Text('DEBUG AUTH:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+              Text('• uid: ${_debugAuthUid ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              Text('• email: ${_debugAuthEmail ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              const SizedBox(height: 8),
+              const Text('DEBUG FIRESTORE:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+              Text('• path: ${_debugFirestorePath ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              Text('• docExists: ${_debugDocExists ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              Text('• docKeys: ${_debugDocKeys?.join(", ") ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              const SizedBox(height: 8),
+              const Text('DEBUG FIELDS:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+              Text('• purchaserName: ${_debugPurchaserNameValue ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              Text('• slotCount: ${_debugSlotCountValue ?? "not set"}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              const SizedBox(height: 8),
+              const Text('DEBUG STATE:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+              Text('• loading: $_loadingAccountData', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              Text('• error: ${_debugErrorMessage ?? "none"}', style: TextStyle(fontSize: 10, fontFamily: 'monospace', color: _debugErrorMessage != null ? Colors.red : Colors.black)),
+              const SizedBox(height: 8),
+              const Text('CONTROLLER VALUES:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+              Text('• _purchaserNameController.text: "${_purchaserNameController.text}"', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+              Text('• _slotsController.text: "${_slotsController.text}"', style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+            ],
+          ),
+        ),
+        // ========== END DEBUG CARD ==========
+        
         if (_loadingAccountData) ...[
           const SizedBox(height: 24),
           Center(

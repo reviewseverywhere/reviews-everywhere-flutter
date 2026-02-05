@@ -48,6 +48,10 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 
 ### Onboarding (First Login Only) - Master V3 Logic
 1. **Step 1**: Welcome - Purchaser name (min 2 chars), initial slots (1-50 integer)
+   - **Auto-prefilled** from existing Firestore account data (same source as View Slots)
+   - Purchaser name from displayName (or firstName + lastName fallback)
+   - Slots from slotsNet (purchased entitlement count)
+   - Both fields remain fully editable after prefill
    - Next button blocked until both fields are valid
 2. **Step 2**: Define Wristbands - Pre-initialized with exactly maxWristbands rows from Step 1
    - All names required (min 2 chars), must be unique (case-insensitive)

@@ -1,0 +1,61 @@
+You are a senior Flutter engineer and senior mobile app designer working on this project.
+
+Context (do NOT change or break this):
+- Login (email/password) is already implemented and working.
+- Shopify webhooks, entitlement logic, and Firebase data are already implemented and working.
+- Core post-login functions already exist and MUST remain unchanged:
+  - View Slots
+  - Write URL
+  - Clear URL
+- These functions were previously accessible from the old UI and are now reused in the new flow.
+
+Goal:
+- The new 4-step onboarding UI has already been created.
+- Now you must CONNECT Step 1 of onboarding to EXISTING DATA instead of leaving it empty.
+
+CRITICAL REQUIREMENT – STEP 1 PREFILL (MANDATORY):
+
+Step 1: “Welcome & Initial Setup” has two fields:
+1) Purchaser Name
+2) Number of Initial Wristband Slots
+
+These fields MUST be pre-filled automatically using the SAME existing logic and data source that was previously shown when the user clicked “View Slots” in the old UI.
+
+Rules:
+- Do NOT invent new backend logic.
+- Do NOT hardcode values.
+- Reuse the existing data already fetched from Firebase / Shopify entitlements.
+- If the data already exists in memory or state after login, reuse it.
+- If it is fetched via an existing provider, service, or controller, reuse it.
+- Do NOT add new API calls unless strictly necessary.
+
+Behavior:
+- On entering Step 1:
+  - Purchaser Name field is auto-filled with the purchaser/customer name associated with the logged-in Shopify account.
+  - Number of Initial Wristband Slots is auto-filled with the total number of wristbands purchased (entitlement count).
+- Both fields MUST remain editable by the user.
+  - Example behavior: if the user purchased 10 wristbands, the field shows 10 by default, but the user may change it to a lower number to start with fewer assignments.
+- Validation rules already implemented must still apply after editing.
+
+Important:
+- This onboarding happens AFTER login, not before.
+- Do NOT add any purchase checks here (purchase validation already happened earlier in the flow).
+- This step is purely about displaying and editing already-known data.
+
+Implementation guidance:
+- Identify where the existing “View Slots” data is sourced from.
+- Extract or reuse that same data model/service/state.
+- Inject it into the onboarding Step 1 form as initial values.
+- Ensure updates in Step 1 correctly propagate to Step 2 logic (wristband count sync).
+
+Do NOT modify:
+- Shopify webhooks
+- Entitlement calculations
+- NFC logic
+- Slot enforcement logic beyond syncing counts correctly
+
+Final check:
+- Step 1 shows real purchaser name and real purchased slot count on first render.
+- User can edit both values.
+- Changing slot count correctly limits Step 2 wristband creation.
+- No regressions in existing functionality.

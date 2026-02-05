@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cards/core/theme/app_theme.dart';
 import 'package:cards/features/onboarding/data/onboarding_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class OnboardingPage extends StatefulWidget {
   static const routeName = '/onboarding';
@@ -13,6 +15,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   int _currentStep = 0;
   bool _saving = false;
+  bool _loadingAccountData = true;
   
   // Validation state
   String? _step1Error;
@@ -48,6 +51,80 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _purchaserNameController.addListener(_onStep1Changed);
     _slotsController.addListener(_onStep1Changed);
     _gbpUrlController.addListener(_onStep4Changed);
+    
+    // Load existing account data to prefill Step 1
+    _loadAccountData();
+  }
+  
+  /// Fetches the account document from Firestore using the same logic as View Slots
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _getAccountDoc() async {
+    final email = FirebaseAuth.instance.currentUser?.email?.trim().toLowerCase();
+    if (email == null || email.isEmpty) return null;
+
+    final q = await FirebaseFirestore.instance
+        .collection('accounts')
+        .where('shopifyEmail', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (q.docs.isEmpty) return null;
+    return q.docs.first;
+  }
+  
+  /// Loads existing account data and prefills Step 1 fields
+  Future<void> _loadAccountData() async {
+    try {
+      final doc = await _getAccountDoc();
+      
+      if (doc != null && doc.exists) {
+        final data = doc.data() ?? {};
+        
+        // Extract purchaser name (try displayName first, then firstName + lastName)
+        String purchaserName = '';
+        if (data['displayName'] != null && data['displayName'].toString().trim().isNotEmpty) {
+          purchaserName = data['displayName'].toString().trim();
+        } else {
+          final firstName = (data['firstName'] ?? '').toString().trim();
+          final lastName = (data['lastName'] ?? '').toString().trim();
+          purchaserName = '$firstName $lastName'.trim();
+        }
+        
+        // Extract slots (use slotsNet as the purchased entitlement count)
+        int slots = 10; // default fallback
+        if (data['slotsNet'] != null) {
+          final parsed = int.tryParse(data['slotsNet'].toString());
+          if (parsed != null && parsed > 0 && parsed <= 50) {
+            slots = parsed;
+          }
+        } else if (data['slotsAvailable'] != null) {
+          final parsed = int.tryParse(data['slotsAvailable'].toString());
+          if (parsed != null && parsed > 0 && parsed <= 50) {
+            slots = parsed;
+          }
+        } else if (data['slotsPurchasedTotal'] != null) {
+          final parsed = int.tryParse(data['slotsPurchasedTotal'].toString());
+          if (parsed != null && parsed > 0 && parsed <= 50) {
+            slots = parsed;
+          }
+        }
+        
+        // Prefill controllers
+        if (purchaserName.isNotEmpty) {
+          _purchaserNameController.text = purchaserName;
+        }
+        _slotsController.text = slots.toString();
+        _maxWristbands = slots;
+      }
+    } catch (e) {
+      debugPrint('[Onboarding] Error loading account data: $e');
+      // Continue with default values on error
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingAccountData = false;
+        });
+      }
+    }
   }
   
   void _onStep1Changed() {
@@ -302,6 +379,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
   
   bool _isCurrentStepValid() {
+    // Block navigation while loading account data on Step 1
+    if (_currentStep == 0 && _loadingAccountData) return false;
+    
     switch (_currentStep) {
       case 0: return _validateStep1();
       case 1: return _validateStep2();
@@ -564,23 +644,43 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: 'Welcome & Initial Setup',
       description: "Welcome! Let's get your Reviews Everywhere dashboard set up. We'll start with some basic information.",
       children: [
-        _PremiumInputField(
-          label: 'Your Name (Purchaser)',
-          hint: 'e.g., Jane Doe',
-          controller: _purchaserNameController,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        _PremiumInputField(
-          label: 'Number of Initial Wristband Slots',
-          hint: '10',
-          controller: _slotsController,
-          keyboardType: TextInputType.number,
-          helperText: "This determines how many wristband inputs you'll start with (1-50).",
-        ),
-        // Show inline error if present
-        if (_step1Error != null) ...[
-          const SizedBox(height: 16),
-          _buildInlineError(_step1Error!),
+        if (_loadingAccountData) ...[
+          const SizedBox(height: 24),
+          Center(
+            child: Column(
+              children: [
+                CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Loading your account data...',
+                  style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+        ] else ...[
+          _PremiumInputField(
+            label: 'Your Name (Purchaser)',
+            hint: 'e.g., Jane Doe',
+            controller: _purchaserNameController,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _PremiumInputField(
+            label: 'Number of Initial Wristband Slots',
+            hint: '10',
+            controller: _slotsController,
+            keyboardType: TextInputType.number,
+            helperText: "This determines how many wristband inputs you'll start with (1-50). You can use fewer than your purchased total.",
+          ),
+          // Show inline error if present
+          if (_step1Error != null) ...[
+            const SizedBox(height: 16),
+            _buildInlineError(_step1Error!),
+          ],
         ],
       ],
     );

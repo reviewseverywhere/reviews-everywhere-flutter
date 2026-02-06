@@ -14,7 +14,13 @@
 const admin = require('firebase-admin');
 const { verifyShopifyWebhook } = require('./verifyShopify');
 const { acquireWebhookLock, markWebhookProcessed, markWebhookFailed } = require('./common');
-const { buildOrderEntitlement, computeSlotsState } = require('./entitlements');
+const {
+  extractUnitsPerBundleFromProperties,
+  buildOrderEntitlement,
+  readOrderEntitlementSnapshot,
+  computeSlotsState,
+} = require('./entitlements');
+
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -192,44 +198,7 @@ async function shopifyOrderPaidHandler(req, res) {
 
     const rawBody = req.body || {};
     const order = normalizeOrderFromWebhook(rawBody);
-
-    console.log('DEBUG ORDER LINE ITEMS RAW:', JSON.stringify(order.line_items, null, 2));
-
-    for (const li of order.line_items || []) {
-      console.log('DEBUG LINE ITEM:', {
-        id: li.id,
-        variant_id: li.variant_id,
-        quantity: li.quantity,
-        properties: li.properties,
-      });
-    }
-
     const { orderId, customerId, email } = extractIds(order, rawBody);
-
-    // ⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION
-    console.log('⚠️ TEMP SHOPIFY WEBHOOK DEBUG – REMOVE AFTER VERIFICATION');
-    console.log('='.repeat(60));
-    console.log('RAW req.body:', req.body);
-    console.log('FULL WEBHOOK PAYLOAD (formatted):', JSON.stringify(rawBody, null, 2));
-    console.log('='.repeat(60));
-    console.log('EXTRACTED IDS:');
-    console.log('  order.id:', order?.id ?? rawBody?.id ?? 'MISSING');
-    console.log('  customer.id:', order?.customer?.id ?? rawBody?.customer?.id ?? 'MISSING');
-    console.log('  customer.email:', order?.customer?.email ?? rawBody?.customer?.email ?? 'MISSING');
-    console.log('='.repeat(60));
-    console.log('LINE ITEMS COUNT:', Array.isArray(order?.line_items) ? order.line_items.length : 0);
-    if (Array.isArray(order?.line_items)) {
-      order.line_items.forEach((li, idx) => {
-        console.log(`LINE ITEM [${idx}]:`);
-        console.log('  title:', li?.title ?? 'MISSING');
-        console.log('  quantity:', li?.quantity ?? 'MISSING');
-        console.log('  variant_title:', li?.variant_title ?? 'MISSING');
-        console.log('  properties:', JSON.stringify(li?.properties ?? [], null, 2));
-      });
-    }
-    console.log('='.repeat(60));
-    console.log('⚠️ END TEMP DEBUG');
-    // ⚠️ END TEMP SHOPIFY WEBHOOK DEBUG
 
     lock = await acquireWebhookLock(req, {
       topic: 'orders/paid',

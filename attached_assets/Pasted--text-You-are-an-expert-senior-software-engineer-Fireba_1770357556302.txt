@@ -1,0 +1,46 @@
+```text
+You are an expert senior software engineer (Firebase Cloud Functions, Node.js, Shopify webhooks). You are working INSIDE Replit, in the ReviewsEverywhere repository. Do NOT mention “go to Replit” or “open Replit”, you are already there.
+
+GOAL
+1) Remove the temporary Shopify debug logs we added (the spam logs):
+   - “LINE ITEMS COUNT”
+   - “LINE ITEM [”
+   - “title:”
+   - “quantity:”
+   - “variant_title:”
+   - “properties:”
+   - “END TEMP DEBUG”
+2) Do NOT change any business logic.
+3) Redeploy ONLY the Firebase Cloud Function: shopifyOrderPaid (us-central1).
+
+CONTEXT
+- It works now. variant_title is correct (e.g., “Pack of 2”, “Pack of 5”).
+- We only want to clean the logs.
+- Repo path: /home/runner/workspace
+- Functions root: /home/runner/workspace/functions
+- Shopify functions: /home/runner/workspace/functions/shopify/
+- Handler: /home/runner/workspace/functions/shopify/orderPaid.js
+- The debug block was added after normalizeOrderFromWebhook in the shopifyOrderPaid flow.
+- Firebase project is already correct: reviewseverywhere-b3eb5
+- Deploying ALL functions caused IAM issues before, so deploy ONLY this single function.
+
+RULES
+- Remove ONLY the temporary debug block, nothing else.
+- No refactors, no dependency updates, no IAM commands, no runtime changes.
+- If not found in orderPaid.js, search inside /home/runner/workspace/functions for the exact strings above and remove only that block.
+- Stop after successful deploy.
+
+STEPS
+1) Open: /home/runner/workspace/functions/shopify/orderPaid.js
+2) Find the temporary debug log block (the console logs that output LINE ITEMS COUNT / LINE ITEM / END TEMP DEBUG etc).
+3) Delete ONLY that debug log block.
+4) Save the file.
+5) In Shell run exactly:
+   cd /home/runner/workspace/functions
+   firebase deploy --only functions:shopifyOrderPaid
+6) Reply with the final deploy output lines that include:
+   - “functions[shopifyOrderPaid(us-central1)] Successful update operation...”
+   - “Deploy complete!”
+
+STOP.
+```

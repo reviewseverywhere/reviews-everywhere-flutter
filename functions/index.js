@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // functions/index.js
 //
@@ -9,65 +9,71 @@
 // - Social login remains separate.
 // - Tap engine unchanged.
 
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 if (!admin.apps.length) admin.initializeApp();
 
-const { onRequest, onCall } = require('firebase-functions/v2/https');
-const { defineSecret } = require('firebase-functions/params');
+const { onRequest, onCall } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 
 // -----------------------------------------------------------------------------
 // Secrets (MUST be set in Firebase Secret Manager)
 // -----------------------------------------------------------------------------
 
 // Shopify webhooks
-const SHOPIFY_WEBHOOK_SECRET = defineSecret('SHOPIFY_WEBHOOK_SECRET'); // webhook HMAC verification
+const SHOPIFY_WEBHOOK_SECRET = defineSecret("SHOPIFY_WEBHOOK_SECRET"); // webhook HMAC verification
 
 // Legacy App Proxy signature verification (NOT used by client-required email/password flow)
-const SHOPIFY_API_SECRET = defineSecret('SHOPIFY_API_SECRET');
+const SHOPIFY_API_SECRET = defineSecret("SHOPIFY_API_SECRET");
 
 // ✅ Storefront private token (required for customerRecover/reset/login)
-const SHOPIFY_STOREFRONT_PRIVATE_TOKEN = defineSecret('SHOPIFY_STOREFRONT_PRIVATE_TOKEN');
+const SHOPIFY_STOREFRONT_PRIVATE_TOKEN = defineSecret(
+  "SHOPIFY_STOREFRONT_PRIVATE_TOKEN",
+);
 
 // ✅ Admin API token (required for UNIDENTIFIED_CUSTOMER fallback invite)
-const SHOPIFY_ADMIN_ACCESS_TOKEN = defineSecret('SHOPIFY_ADMIN_ACCESS_TOKEN');
+const SHOPIFY_ADMIN_ACCESS_TOKEN = defineSecret("SHOPIFY_ADMIN_ACCESS_TOKEN");
 
 // Tap token signing secret (for /tap?t=...)
-const TAP_TOKEN_SECRET = defineSecret('TAP_TOKEN_SECRET');
+const TAP_TOKEN_SECRET = defineSecret("TAP_TOKEN_SECRET");
 
 // -----------------------------------------------------------------------------
 // Region / Invoker
 // -----------------------------------------------------------------------------
-const REGION = 'us-central1';
-const PUBLIC_INVOKER = 'public';
+const REGION = "us-central1";
+const PUBLIC_INVOKER = "private";
 
 // -----------------------------------------------------------------------------
 // Shopify → Firebase Webhooks (public endpoints)
 // -----------------------------------------------------------------------------
-const { shopifyOrderPaidHandler } = require('./shopify/orderPaid');
-const { customersCreateHandler } = require('./shopify/customersCreate');
-const { customersUpdateHandler } = require('./shopify/customersUpdate');
-const { ordersCreateHandler } = require('./shopify/ordersCreate');
-const { ordersUpdatedHandler } = require('./shopify/ordersUpdated');
-const { ordersFulfilledHandler } = require('./shopify/ordersFulfilled');
-const { ordersCancelledHandler } = require('./shopify/ordersCancelled');
-const { refundsCreateHandler } = require('./shopify/refundsCreate');
+const { shopifyOrderPaidHandler } = require("./shopify/orderPaid");
+const { customersCreateHandler } = require("./shopify/customersCreate");
+const { customersUpdateHandler } = require("./shopify/customersUpdate");
+const { ordersCreateHandler } = require("./shopify/ordersCreate");
+const { ordersUpdatedHandler } = require("./shopify/ordersUpdated");
+const { ordersFulfilledHandler } = require("./shopify/ordersFulfilled");
+const { ordersCancelledHandler } = require("./shopify/ordersCancelled");
+const { refundsCreateHandler } = require("./shopify/refundsCreate");
 
 // -----------------------------------------------------------------------------
 // Auth (deterministic linking; NO activation lifecycle)
 // -----------------------------------------------------------------------------
-const { lookupAccountByEmailCallable } = require('./auth/lookupAccountByEmail');
-const { linkAuthToAccountCallable } = require('./auth/linkAuthToAccount');
+const { lookupAccountByEmailCallable } = require("./auth/lookupAccountByEmail");
+const { linkAuthToAccountCallable } = require("./auth/linkAuthToAccount");
 
 // ✅ Client-required Storefront email/password auth (IN-APP ONLY)
-const { shopifyCustomerRecoverCallable } = require('./auth/shopifyCustomerRecover');
-const { shopifyCustomerResetPasswordCallable } = require('./auth/shopifyCustomerResetPassword');
-const { shopifyCustomerLoginCallable } = require('./auth/shopifyCustomerLogin');
+const {
+  shopifyCustomerRecoverCallable,
+} = require("./auth/shopifyCustomerRecover");
+const {
+  shopifyCustomerResetPasswordCallable,
+} = require("./auth/shopifyCustomerResetPassword");
+const { shopifyCustomerLoginCallable } = require("./auth/shopifyCustomerLogin");
 
 // -----------------------------------------------------------------------------
 // Tap redirect engine
 // -----------------------------------------------------------------------------
-const { tapRedirectHandler } = require('./tap/tapRedirect');
-const { debugMintTapUrlCallable } = require('./tap/debugMintTapUrl');
+const { tapRedirectHandler } = require("./tap/tapRedirect");
+const { debugMintTapUrlCallable } = require("./tap/debugMintTapUrl");
 
 /* -------------------------------------------------------------------------- */
 /* Shopify → Firebase Webhooks                                                */
@@ -79,7 +85,7 @@ exports.shopifyOrderPaid = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  shopifyOrderPaidHandler
+  shopifyOrderPaidHandler,
 );
 
 exports.shopifyCustomersCreate = onRequest(
@@ -88,7 +94,7 @@ exports.shopifyCustomersCreate = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  customersCreateHandler
+  customersCreateHandler,
 );
 
 exports.shopifyCustomersUpdate = onRequest(
@@ -97,7 +103,7 @@ exports.shopifyCustomersUpdate = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  customersUpdateHandler
+  customersUpdateHandler,
 );
 
 exports.shopifyOrdersCreate = onRequest(
@@ -106,7 +112,7 @@ exports.shopifyOrdersCreate = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  ordersCreateHandler
+  ordersCreateHandler,
 );
 
 exports.shopifyOrdersUpdated = onRequest(
@@ -115,7 +121,7 @@ exports.shopifyOrdersUpdated = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  ordersUpdatedHandler
+  ordersUpdatedHandler,
 );
 
 exports.shopifyOrdersFulfilled = onRequest(
@@ -124,7 +130,7 @@ exports.shopifyOrdersFulfilled = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  ordersFulfilledHandler
+  ordersFulfilledHandler,
 );
 
 exports.shopifyOrdersCancelled = onRequest(
@@ -133,7 +139,7 @@ exports.shopifyOrdersCancelled = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  ordersCancelledHandler
+  ordersCancelledHandler,
 );
 
 exports.shopifyRefundsCreate = onRequest(
@@ -142,7 +148,7 @@ exports.shopifyRefundsCreate = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_WEBHOOK_SECRET],
   },
-  refundsCreateHandler
+  refundsCreateHandler,
 );
 
 /* -------------------------------------------------------------------------- */
@@ -151,12 +157,12 @@ exports.shopifyRefundsCreate = onRequest(
 
 exports.lookupAccountByEmail = onCall(
   { region: REGION, invoker: PUBLIC_INVOKER },
-  lookupAccountByEmailCallable
+  lookupAccountByEmailCallable,
 );
 
 exports.linkAuthToAccount = onCall(
   { region: REGION, invoker: PUBLIC_INVOKER },
-  linkAuthToAccountCallable
+  linkAuthToAccountCallable,
 );
 
 /* -------------------------------------------------------------------------- */
@@ -174,8 +180,8 @@ exports.shopifyCustomerRecover = onCall(
     shopifyCustomerRecoverCallable(
       req,
       SHOPIFY_STOREFRONT_PRIVATE_TOKEN.value(),
-      SHOPIFY_ADMIN_ACCESS_TOKEN.value()
-    )
+      SHOPIFY_ADMIN_ACCESS_TOKEN.value(),
+    ),
 );
 
 // Step 5: customerReset(token/newPassword) (reset-by-url supported)
@@ -185,7 +191,11 @@ exports.shopifyCustomerResetPassword = onCall(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_STOREFRONT_PRIVATE_TOKEN],
   },
-  (req) => shopifyCustomerResetPasswordCallable(req, SHOPIFY_STOREFRONT_PRIVATE_TOKEN.value())
+  (req) =>
+    shopifyCustomerResetPasswordCallable(
+      req,
+      SHOPIFY_STOREFRONT_PRIVATE_TOKEN.value(),
+    ),
 );
 
 // Step 6: customerAccessTokenCreate(email,password) -> Firebase custom token
@@ -195,7 +205,8 @@ exports.shopifyCustomerLogin = onCall(
     invoker: PUBLIC_INVOKER,
     secrets: [SHOPIFY_STOREFRONT_PRIVATE_TOKEN],
   },
-  (req) => shopifyCustomerLoginCallable(req, SHOPIFY_STOREFRONT_PRIVATE_TOKEN.value())
+  (req) =>
+    shopifyCustomerLoginCallable(req, SHOPIFY_STOREFRONT_PRIVATE_TOKEN.value()),
 );
 
 /* -------------------------------------------------------------------------- */
@@ -208,7 +219,7 @@ exports.tap = onRequest(
     invoker: PUBLIC_INVOKER,
     secrets: [TAP_TOKEN_SECRET],
   },
-  tapRedirectHandler
+  tapRedirectHandler,
 );
 
 exports.debugMintTapUrl = onCall(
@@ -217,5 +228,5 @@ exports.debugMintTapUrl = onCall(
     invoker: PUBLIC_INVOKER,
     secrets: [TAP_TOKEN_SECRET],
   },
-  debugMintTapUrlCallable
+  debugMintTapUrlCallable,
 );

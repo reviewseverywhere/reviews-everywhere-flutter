@@ -39,23 +39,24 @@ function normalizeEmailLower(v) {
  * Shopify returns properties as array: [{ name, value }, ...]
  */
 function extractUnitsPerBundleFromProperties(properties) {
-  const props = Array.isArray(properties) ? properties : [];
-  const candidates = new Set([
-    'units per bundle',
-    'unit per bundle',
-    'bundle units',
-    'units_per_bundle',
-    'unitsperbundle',
-  ]);
+  if (!Array.isArray(properties)) return 1;
 
-  for (const p of props) {
-    const name = String(p?.name || '').trim().toLowerCase();
-    if (!name || !candidates.has(name)) continue;
+  for (const p of properties) {
+    if (!p) continue;
+    const name = String(p.name || '').toLowerCase();
+    const value = String(p.value || '').trim();
 
-    const raw = String(p?.value ?? '').trim();
-    const n = Number(raw);
-    if (Number.isFinite(n) && n > 0) return Math.floor(n);
+    if (
+      name === 'units_per_bundle' ||
+      name === 'unitsperbundle' ||
+      name === 'bundle_units' ||
+      name === 'pack_size'
+    ) {
+      const n = parseInt(value, 10);
+      if (!isNaN(n) && n > 0) return n;
+    }
   }
+
   return 1;
 }
 
@@ -73,8 +74,13 @@ function buildOrderEntitlement(order) {
     const quantity = asInt(li?.quantity, 0);
     if (quantity <= 0) continue;
 
-    const unitsPerBundle = extractUnitsPerBundleFromProperties(li?.properties);
-    const units = quantity * (unitsPerBundle || 1);
+ const unitsPerBundle =
+  extractUnitsPerBundleFromProperties(li?.properties) ||
+  extractUnitsPerBundleFromProperties(li?.custom_attributes) ||
+  extractUnitsPerBundleFromProperties(li?.properties?.custom_attributes) ||
+  1;
+   
+ const units = quantity * (unitsPerBundle || 1);
 
     unitsTotal += units;
 

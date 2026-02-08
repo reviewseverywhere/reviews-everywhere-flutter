@@ -37,27 +37,70 @@ function normalizeEmailLower(v) {
 /**
  * Extract Units-per-Bundle from a Shopify line_item.properties array.
  * Shopify returns properties as array: [{ name, value }, ...]
+ * Returns the parsed value if found, or null if no matching property.
  */
 function extractUnitsPerBundleFromProperties(properties) {
-  if (!Array.isArray(properties)) return 1;
+  const props = Array.isArray(properties) ? properties : [];
+  const candidates = new Set([
+    'units per bundle',
+    'unit per bundle',
+    'bundle units',
+    'units_per_bundle',
+    'unitsperbundle',
+    'bundle_units',
+    'pack_size',
+  ]);
 
-  for (const p of properties) {
-    if (!p) continue;
-    const name = String(p.name || '').toLowerCase();
-    const value = String(p.value || '').trim();
+  for (const p of props) {
+    const name = String(p?.name || '').trim().toLowerCase();
+    if (!name || !candidates.has(name)) continue;
 
-    if (
-      name === 'units_per_bundle' ||
-      name === 'unitsperbundle' ||
-      name === 'bundle_units' ||
-      name === 'pack_size'
-    ) {
-      const n = parseInt(value, 10);
-      if (!isNaN(n) && n > 0) return n;
+    const raw = String(p?.value ?? '').trim();
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  }
+  return null;
+}
+
+/**
+ * Extract units-per-bundle from variant_title string.
+ * Examples:
+ *   "Single (1)" -> 1
+ *   "Pack of 5" -> 5
+ *   "Pack of 10 (10% off)" -> 10
+ *   "Pack of 20 (15% off)" -> 20
+ * Returns null if nothing valid found.
+ */
+function extractUnitsPerBundleFromVariantTitle(variantTitle) {
+  if (!variantTitle || typeof variantTitle !== 'string') return null;
+  const s = variantTitle.trim().toLowerCase();
+  if (!s) return null;
+
+  // 1) "pack of N"
+  const packMatch = s.match(/pack\s+of\s+(\d+)/);
+  if (packMatch) {
+    const n = parseInt(packMatch[1], 10);
+    if (n > 0) return n;
+  }
+
+  // 2) "(N)" where N is a number not followed by %
+  const parenMatch = s.match(/\((\d+)\)/);
+  if (parenMatch) {
+    const afterParen = s.substring(s.indexOf(parenMatch[0]) + parenMatch[0].length);
+    if (!afterParen.trimStart().startsWith('%')) {
+      const n = parseInt(parenMatch[1], 10);
+      if (n > 0) return n;
     }
   }
 
-  return 1;
+  // 3) First standalone integer not followed by %
+  const standaloneMatch = s.match(/(?:^|\s)(\d+)(?!\s*%)/);
+  if (standaloneMatch) {
+    const n = parseInt(standaloneMatch[1], 10);
+    if (n > 0) return n;
+  }
+
+  return null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -74,13 +117,14 @@ function buildOrderEntitlement(order) {
     const quantity = asInt(li?.quantity, 0);
     if (quantity <= 0) continue;
 
- const unitsPerBundle =
-  extractUnitsPerBundleFromProperties(li?.properties) ||
-  extractUnitsPerBundleFromProperties(li?.custom_attributes) ||
-  extractUnitsPerBundleFromProperties(li?.properties?.custom_attributes) ||
-  1;
-   
- const units = quantity * (unitsPerBundle || 1);
+    const unitsPerBundle =
+      extractUnitsPerBundleFromProperties(li?.properties)
+      ?? extractUnitsPerBundleFromProperties(li?.custom_attributes)
+      ?? extractUnitsPerBundleFromProperties(li?.properties?.custom_attributes)
+      ?? extractUnitsPerBundleFromVariantTitle(li?.variant_title)
+      ?? 1;
+
+    const units = quantity * unitsPerBundle;
 
     unitsTotal += units;
 
@@ -89,6 +133,7 @@ function buildOrderEntitlement(order) {
       variantId: li?.variant_id != null ? String(li.variant_id) : null,
       sku: li?.sku != null ? String(li.sku) : null,
       title: li?.title != null ? String(li.title) : null,
+      variantTitle: li?.variant_title != null ? String(li.variant_title) : null,
       quantity,
       unitsPerBundle,
       units,
@@ -114,8 +159,11 @@ function resolveRefundUnitsPerBundle({ refundLineItem, orderEntitlementLines }) 
   const rli = refundLineItem || {};
   const li = rli?.line_item || null;
 
-  const fromProps = extractUnitsPerBundleFromProperties(li?.properties);
-  if (fromProps && fromProps !== 1) return fromProps;
+  const fromProps =
+    extractUnitsPerBundleFromProperties(li?.properties)
+    ?? extractUnitsPerBundleFromProperties(li?.custom_attributes)
+    ?? extractUnitsPerBundleFromProperties(li?.properties?.custom_attributes);
+  if (fromProps != null && fromProps > 1) return fromProps;
 
   const lineItemId =
     li?.id != null
@@ -129,6 +177,9 @@ function resolveRefundUnitsPerBundle({ refundLineItem, orderEntitlementLines }) 
     const u = asInt(match?.unitsPerBundle, 1);
     if (u > 0) return u;
   }
+
+  const fromVariant = extractUnitsPerBundleFromVariantTitle(li?.variant_title);
+  if (fromVariant != null) return fromVariant;
 
   return 1;
 }
@@ -301,6 +352,7 @@ async function writeOrderEntitlementSnapshot({ orderId, customerId, email, entit
 
 module.exports = {
   extractUnitsPerBundleFromProperties,
+  extractUnitsPerBundleFromVariantTitle,
   buildOrderEntitlement,
   buildRefundEntitlement,
 

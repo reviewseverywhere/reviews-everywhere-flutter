@@ -1,0 +1,112 @@
+You are an expert full stack engineer and fluttern expert too
+
+Context:
+We receive Shopify webhooks into Firebase Cloud Functions v2 (Node). Current entitlement calculation incorrectly counts 1 unit per order when Shopify line_item.properties is empty. In Cloud Logs we see e.g.:
+variant_title: "Pack of 5"
+properties: []
+But Firestore account slotsPurchasedTotal increments by 1 instead of 5.
+
+Requirements:
+
+Fix entitlement unit extraction to work even when properties is empty.
+
+Primary: read unitsPerBundle from line_item.properties if present (current behavior).
+
+Fallback: parse integer units from line_item.variant_title (examples: "Single (1)", "Pack of 5", "Pack of 10 (10% off)", "Pack of 20 (15% off)").
+
+Also try fallback from line_item.variant_title inside refunds (refund_line_items).
+
+If cannot parse, default to 1.
+
+This MUST not break existing behavior.
+
+Implement a helper:
+
+extractUnitsPerBundleFromVariantTitle(variantTitle: string) -> number|null
+
+It should detect patterns:
+
+"Single (1)" -> 1
+
+"Pack of 5" -> 5
+
+"Pack of 10 (10% off)" -> 10
+
+"Pack of 20 (15% off)" -> 20
+
+Use robust regex to extract the first positive integer in the string, but avoid matching percentages like "10%". Prefer matching:
+
+"pack of (\d+)" first
+
+then "
+(
+\d
++
+)
+(\d+)" for "Single (1)"
+
+then as last fallback, extract first standalone integer that is not followed by "%".
+
+Return null if nothing valid.
+
+Apply the helper in entitlements.js:
+
+In buildOrderEntitlement(), resolve unitsPerBundle like:
+
+from properties
+
+else from variant_title via helper
+
+else 1
+
+Ensure returned unitsPerBundle is written into entitlementLines and unitsTotal is correct.
+
+Apply equivalent logic for refunds:
+
+In resolveRefundUnitsPerBundle(), after checking properties and snapshot lines, also fallback to variant_title (refund line item line_item.variant_title).
+
+Keep snapshot lineItemId matching as-is.
+
+Add minimal logging in orderPaid.js (only while verifying):
+
+Log for each line item: title, variant_title, quantity, resolved unitsPerBundle, computed units.
+
+IMPORTANT: do NOT add giant debug blocks. One concise log line per item.
+
+After verification, remove these logs.
+
+Deploy:
+
+Deploy only shopifyOrderPaid function.
+
+Use: cd ~/workspace/functions && firebase deploy --only functions:shopifyOrderPaid
+
+Verification steps:
+
+Use Shopify “Send test” or create a draft order for customer ALEX TEST with variant "Pack of 5".
+
+Confirm in Google Cloud Logs that resolved unitsPerBundle=5.
+
+Confirm Firestore accounts/{shopifyCustomerId} slotsPurchasedTotal increases by 5 (not by 1).
+
+If existing data is already wrong from past orders, do NOT mass-migrate automatically. Just prove the fix works going forward.
+
+Flutter app debug banner removal:
+
+The app UI shows a visible "TEMPORARY DEBUG" box with DEBUG AUTH / DEBUG FIRESTORE.
+
+Find that widget and ensure it is not shown in production:
+
+Either remove it entirely, or wrap it with kDebugMode so it only appears in debug builds.
+
+Do not change business logic, only hide/remove debug UI.
+
+Commit the changes in the workspace.
+
+Deliverables:
+
+List exact files changed.
+
+Paste the final updated code blocks for the helper + the modified entitlement resolution logic.
+
+Confirm deploy succeeded and show the key verification log line example.

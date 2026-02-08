@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cards/core/theme/app_theme.dart';
 import 'package:cards/features/onboarding/data/onboarding_service.dart';
@@ -701,7 +702,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       description: "Welcome! Let's get your Reviews Everywhere dashboard set up. We'll start with some basic information.",
       children: [
         // ========== TEMPORARY DEBUG CARD (REMOVE AFTER VERIFICATION) ==========
-        Container(
+        if (kDebugMode) Container(
           width: double.infinity,
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(12),

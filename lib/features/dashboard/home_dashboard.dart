@@ -2,10 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cards/core/theme/app_theme.dart';
+import 'package:cards/core/widgets/premium_widgets.dart';
+import 'package:cards/features/dashboard/tour_data.dart';
 import 'package:cards/features/nfc_tag/presentation/viewmodels/home_view_model.dart';
 import 'package:cards/features/nfc_tag/presentation/pages/enter_url_page.dart';
 import 'package:cards/features/nfc_tag/presentation/widgets/validation_dialog.dart';
@@ -29,6 +33,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
   Map<String, dynamic>? _accountData;
   bool _loadingAccount = true;
 
+  bool _showTour = false;
+  int _tourStep = 0;
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +46,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     _vm = context.read<HomeViewModel>();
     _vm.addListener(_onVmStateChanged);
     _loadAccountData();
+    _checkTourStatus();
   }
 
   @override
@@ -46,6 +54,25 @@ class _HomeDashboardState extends State<HomeDashboard> {
     _vm.removeListener(_onVmStateChanged);
     _urlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkTourStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final completed = prefs.getBool('dashboardTourCompleted') ?? false;
+    if (!completed && mounted) {
+      setState(() {
+        _showTour = true;
+        _tourStep = 0;
+      });
+    }
+  }
+
+  Future<void> _completeTour() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('dashboardTourCompleted', true);
+    if (mounted) {
+      setState(() => _showTour = false);
+    }
   }
 
   Future<void> _loadAccountData() async {
@@ -311,250 +338,389 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return 0;
   }
 
-  String _fmtTs(dynamic ts) {
-    if (ts is Timestamp) {
-      final d = ts.toDate();
-      return '${d.day}/${d.month}/${d.year} ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+  String _greeting() {
+    final data = _accountData;
+    String name = 'there';
+    if (data != null) {
+      final display = data['displayName'] as String?;
+      final first = data['firstName'] as String?;
+      if (display != null && display.trim().isNotEmpty) {
+        name = display.trim().split(' ').first;
+      } else if (first != null && first.trim().isNotEmpty) {
+        name = first.trim();
+      }
     }
-    return '-';
+    final user = FirebaseAuth.instance.currentUser;
+    if (name == 'there' && user?.displayName != null && user!.displayName!.trim().isNotEmpty) {
+      name = user.displayName!.trim().split(' ').first;
+    }
+    return name;
   }
 
   @override
   Widget build(BuildContext context) {
     final canUseNfc = _nfcAvailable || _simulatorMode;
 
-    return GradientBackground(
-      child: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader()),
-            SliverToBoxAdapter(child: _buildAccountSummary()),
-            if (!_nfcAvailable && !_simulatorMode)
-              SliverToBoxAdapter(child: _buildNfcBanner()),
-            SliverToBoxAdapter(child: _buildActionCards(canUseNfc)),
-            SliverToBoxAdapter(child: const SizedBox(height: AppSpacing.xl)),
-          ],
+    return Stack(
+      children: [
+        GradientBackground(
+          child: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: _loadAccountData,
+              color: AppColors.primary,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: _buildHeader()),
+                  SliverToBoxAdapter(child: _buildSlotSummaryCard()),
+                  SliverToBoxAdapter(child: _buildQuickActions(canUseNfc)),
+                  SliverToBoxAdapter(child: _buildRecentActivity()),
+                  SliverToBoxAdapter(child: _buildSupportCard()),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+        if (_showTour) _buildTourOverlay(),
+      ],
     );
   }
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/logo_1.png', width: 56, height: 56),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Welcome back!',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-          ),
           if (kDebugMode && !_nfcAvailable) ...[
-            const SizedBox(height: AppSpacing.sm),
-            GestureDetector(
-              onTap: () => setState(() => _simulatorMode = !_simulatorMode),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-                decoration: BoxDecoration(
-                  color: _simulatorMode ? AppColors.greenLight : AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: _simulatorMode ? AppColors.green : AppColors.border,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _simulatorMode ? Icons.check_circle : Icons.radio_button_unchecked,
-                      size: 16,
-                      color: _simulatorMode ? AppColors.green : AppColors.textMuted,
+            Align(
+              alignment: Alignment.topRight,
+              child: GestureDetector(
+                onTap: () => setState(() => _simulatorMode = !_simulatorMode),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _simulatorMode ? AppColors.greenLight : AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: _simulatorMode ? AppColors.green : AppColors.border,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Simulator Mode',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _simulatorMode ? Icons.check_circle : Icons.radio_button_unchecked,
+                        size: 14,
                         color: _simulatorMode ? AppColors.green : AppColors.textMuted,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        'Sim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _simulatorMode ? AppColors.green : AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: 8),
           ],
+          Text(
+            'Hi, ${_greeting()}',
+            style: GoogleFonts.raleway(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              height: 1.2,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Here\'s your dashboard overview',
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildAccountSummary() {
+  Widget _buildSlotSummaryCard() {
     if (_loadingAccount) {
       return const Padding(
-        padding: EdgeInsets.all(AppSpacing.lg),
-        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        padding: EdgeInsets.all(24),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
     final data = _accountData;
     if (data == null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: const InfoBanner(
-          message: 'No account record found. This usually means Shopify has not processed your order yet.',
-          icon: Icons.info_outline,
-          isWarning: true,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        child: PremiumCard(
+          child: Column(
+            children: [
+              const Icon(Icons.info_outline, color: AppColors.orange, size: 32),
+              const SizedBox(height: 12),
+              Text(
+                'No account record found',
+                style: AppTextStyles.h3,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'This usually means Shopify has not processed your order yet.',
+                style: AppTextStyles.body,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    final planStatus = (data['planStatus'] ?? '-').toString();
-    final isActive = planStatus.toLowerCase() == 'active';
     final slotsAvailable = _asInt(data['slotsAvailable']);
     final slotsPurchased = _asInt(data['slotsPurchasedTotal']);
+    final slotsUsed = _asInt(data['slotsUsed']);
+    final slotsRefunded = _asInt(data['slotsRefundedTotal']);
+    final hasRefunds = slotsRefunded > 0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: PremiumCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'WRISTBAND SLOTS',
+              style: AppTextStyles.sectionLabel,
             ),
-            decoration: BoxDecoration(
-              color: (isActive ? AppColors.greenLight : AppColors.accentLight),
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isActive ? Icons.check_circle : Icons.warning_amber,
-                  size: 18,
-                  color: isActive ? AppColors.green : AppColors.orange,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Plan: $planStatus',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isActive ? AppColors.green : AppColors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  title: 'Available',
-                  value: '$slotsAvailable',
-                  icon: Icons.confirmation_number_outlined,
-                  color: AppColors.green,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: StatCard(
-                  title: 'Purchased',
-                  value: '$slotsPurchased',
-                  icon: Icons.shopping_bag_outlined,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          if (slotsAvailable > 0)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _launchAddWristband,
-                icon: const Icon(Icons.add_circle_outline, size: 20),
-                label: const Text('Add new wristband'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.accentLight,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(height: 16),
+            Center(
+              child: Column(
                 children: [
-                  const Icon(Icons.info_outline, size: 18, color: AppColors.orange),
-                  const SizedBox(width: 8),
                   Text(
-                    'No slots available, buy more',
-                    style: TextStyle(
+                    '$slotsAvailable',
+                    style: GoogleFonts.raleway(
+                      fontSize: 52,
+                      fontWeight: FontWeight.w700,
+                      color: slotsAvailable > 0 ? AppColors.primary : AppColors.orange,
+                      height: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Available',
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.orange,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _slotMetric('Purchased', '$slotsPurchased', AppColors.primary),
+                  Container(width: 1, height: 30, color: AppColors.border),
+                  _slotMetric('Used', '$slotsUsed', AppColors.textPrimary),
+                  if (hasRefunds) ...[
+                    Container(width: 1, height: 30, color: AppColors.border),
+                    _slotMetric('Refunded', '$slotsRefunded', AppColors.orange),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (slotsAvailable > 0)
+              PrimaryButton(
+                label: 'Add new wristband',
+                icon: Icons.add_circle_outline,
+                onPressed: _launchAddWristband,
+              )
+            else
+              PillBadge(
+                text: 'No slots available, buy more',
+                backgroundColor: AppColors.accentLight,
+                textColor: AppColors.orange,
+                icon: Icons.info_outline,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _slotMetric(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.raleway(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions(bool canUseNfc) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('QUICK ACTIONS', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _QuickActionCard(
+                  icon: Icons.edit_note,
+                  label: 'Write URL',
+                  color: AppColors.primary,
+                  onTap: canUseNfc ? _showEnterUrl : () => _snack('NFC not available'),
+                  enabled: canUseNfc,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _QuickActionCard(
+                  icon: Icons.delete_sweep,
+                  label: 'Clear URL',
+                  color: AppColors.orange,
+                  onTap: canUseNfc ? _showConfirmClear : () => _snack('NFC not available'),
+                  enabled: canUseNfc,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _QuickActionCard(
+                  icon: Icons.visibility,
+                  label: 'View Slots',
+                  color: AppColors.textPrimary,
+                  onTap: () => _loadAccountData().then((_) {
+                    if (_accountData != null) {
+                      _showSlotsDialog();
+                    }
+                  }),
+                  enabled: true,
+                ),
+              ),
+            ],
+          ),
+          if (!_nfcAvailable && !_simulatorMode) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.accentLight,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.nfc, color: AppColors.orange, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'NFC is not available. Enable it in Settings or use Simulator Mode.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.orange,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildNfcBanner() {
+  Widget _buildRecentActivity() {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.accentLight,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: PremiumCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.nfc, color: AppColors.orange, size: 24),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.history, size: 18, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                Text('Recent activity', style: AppTextStyles.h3),
+              ],
             ),
-            const SizedBox(width: AppSpacing.md),
-            const Expanded(
-              child: Text(
-                'NFC is not available on this device. Enable NFC in Settings or use Simulator Mode.',
-                style: TextStyle(fontSize: 13, color: AppColors.orange, fontWeight: FontWeight.w500),
+            const SizedBox(height: 20),
+            Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.inbox_outlined,
+                    size: 40,
+                    color: AppColors.textMuted.withOpacity(0.4),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No recent activity yet',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your wristband activity will show up here',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textMuted.withOpacity(0.7),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -563,47 +729,91 @@ class _HomeDashboardState extends State<HomeDashboard> {
     );
   }
 
-  Widget _buildActionCards(bool canUseNfc) {
+  Widget _buildSupportCard() {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('QUICK ACTIONS', style: AppTextStyles.sectionLabel),
-          const SizedBox(height: AppSpacing.md),
-          ActionTile(
-            icon: Icons.edit_note,
-            title: 'Write URL',
-            description: 'Program a wristband with a custom URL',
-            color: AppColors.primary,
-            onTap: canUseNfc ? _showEnterUrl : () => _snack('NFC not available'),
-            enabled: canUseNfc,
-            isPrimary: true,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          ActionTile(
-            icon: Icons.delete_sweep,
-            title: 'Clear URL',
-            description: 'Remove the URL from a wristband',
-            color: AppColors.orange,
-            onTap: canUseNfc ? _showConfirmClear : () => _snack('NFC not available'),
-            enabled: canUseNfc,
-            isDestructive: true,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          ActionTile(
-            icon: Icons.visibility,
-            title: 'View Slots',
-            description: 'See your account and slot details',
-            color: AppColors.textPrimary,
-            onTap: () => _loadAccountData().then((_) {
-              if (_accountData != null) {
-                _showSlotsDialog();
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: PremiumCard(
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.headset_mic_outlined, size: 22, color: AppColors.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Need help?',
+                    style: GoogleFonts.raleway(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'We\'re here for you',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                _snack('Support contact coming soon');
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary, width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                textStyle: GoogleFonts.montserrat(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              child: const Text('Contact support'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTourOverlay() {
+    final step = dashboardTourSteps[_tourStep];
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        color: Colors.black.withOpacity(0.6),
+        child: Center(
+          child: PremiumTourModal(
+            title: step.title,
+            body: step.body,
+            currentStep: _tourStep + 1,
+            totalSteps: dashboardTourSteps.length,
+            onNext: () {
+              if (_tourStep < dashboardTourSteps.length - 1) {
+                setState(() => _tourStep++);
+              } else {
+                _completeTour();
               }
-            }),
-            enabled: true,
+            },
+            onPrev: _tourStep > 0 ? () => setState(() => _tourStep--) : null,
+            onClose: _completeTour,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -621,6 +831,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
     final slotsRefunded = _asInt(data['slotsRefundedTotal']);
     final updatedAt = data['updatedAt'];
     final entitlementUpdatedAt = data['entitlementUpdatedAt'];
+
+    String fmtTs(dynamic ts) {
+      if (ts is Timestamp) {
+        final d = ts.toDate();
+        return '${d.day}/${d.month}/${d.year} ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+      }
+      return '-';
+    }
 
     await showDialog(
       context: context,
@@ -669,8 +887,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
               _metricRow('Refunded total', '$slotsRefunded'),
               const SizedBox(height: 12),
               const Divider(),
-              Text('Entitlements updated: ${_fmtTs(entitlementUpdatedAt)}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
-              Text('Last updated: ${_fmtTs(updatedAt)}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              Text('Last account update: ${fmtTs(updatedAt)}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              Text('Last entitlement update: ${fmtTs(entitlementUpdatedAt)}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
             ],
           ),
         ),
@@ -688,17 +906,78 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
           Text(
             value,
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: valueColor ?? Colors.black,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? AppColors.textPrimary,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.5,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              boxShadow: AppShadows.card,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 22, color: color),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

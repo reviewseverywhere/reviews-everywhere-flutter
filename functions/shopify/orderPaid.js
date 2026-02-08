@@ -217,10 +217,6 @@ async function shopifyOrderPaidHandler(req, res) {
     const entitlement = buildOrderEntitlement(order);
     const unitsFromOrder = Number(entitlement?.unitsTotal || 0);
 
-    // ⚠️ TEMP: concise per-line-item log – REMOVE AFTER VERIFICATION
-    for (const ln of entitlement.lines || []) {
-      console.log(`[orderPaid] lineItem: title=${ln.title}, variant=${ln.variantTitle}, qty=${ln.quantity}, unitsPerBundle=${ln.unitsPerBundle}, units=${ln.units}`);
-    }
     console.log(`[orderPaid] orderId=${orderId} customerId=${customerId} totalUnits=${unitsFromOrder}`);
 
     const orderRef = db.collection('shopifyOrders').doc(orderId);

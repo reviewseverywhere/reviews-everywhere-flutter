@@ -9,7 +9,8 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 │   ├── main.dart                    # App entry point
 │   ├── app.dart                     # Main app widget with routing
 │   ├── core/
-│   │   └── theme/app_theme.dart     # Premium design system
+│   │   ├── theme/app_theme.dart     # Premium design system (colors, spacing, radii, shadows, text styles, widgets)
+│   │   └── widgets/premium_widgets.dart  # Reusable premium components
 │   ├── features/
 │   │   ├── nfc_tag/                 # Core NFC functionality
 │   │   │   ├── presentation/        # UI pages and widgets
@@ -18,7 +19,9 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 │   │   ├── onboarding/              # 4-step onboarding flow
 │   │   │   ├── presentation/pages/  # Onboarding screens
 │   │   │   └── data/                # OnboardingService
-│   │   ├── dashboard/               # Home dashboard
+│   │   ├── dashboard/
+│   │   │   ├── home_dashboard.dart  # Premium dashboard + tooltip tour
+│   │   │   └── tour_data.dart       # 11-step tour content
 │   │   └── shell/                   # Bottom navigation shell
 │   │       ├── main_shell.dart      # 5-tab navigation
 │   │       ├── wristbands_page.dart # Wristbands tab (placeholder)
@@ -81,6 +84,14 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 - New wristband names + assignments merged into existing `onboardingData`
 - Cancel/back does NOT change `slotsUsed`
 - Server-side guard: transaction checks `slotsAvailable > 0` before incrementing
+
+### First-Time Dashboard Tour (11 Steps)
+- Shows only on first dashboard open (per device)
+- Dark overlay (60% opacity) covers dashboard
+- Centered modal card with title, body, progress counter, Prev/Next buttons
+- Close (X) or Finish marks tour as completed via SharedPreferences
+- Tour text centralized in `lib/features/dashboard/tour_data.dart`
+- Steps 10-11 use placeholder text (screenshots not provided yet)
 
 ### Core Actions (Unchanged)
 - **View Slots**: Shows account/slot information from Firestore

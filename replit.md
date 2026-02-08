@@ -10,7 +10,7 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 │   ├── app.dart                     # Main app widget with routing
 │   ├── core/
 │   │   ├── theme/app_theme.dart     # Premium design system (colors, spacing, radii, shadows, text styles, widgets)
-│   │   └── widgets/premium_widgets.dart  # Reusable premium components
+│   │   └── widgets/premium_widgets.dart  # Reusable premium components (PillBadge, PrimaryButton, etc.)
 │   ├── features/
 │   │   ├── nfc_tag/                 # Core NFC functionality
 │   │   │   ├── presentation/        # UI pages and widgets
@@ -20,10 +20,11 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 │   │   │   ├── presentation/pages/  # Onboarding screens
 │   │   │   └── data/                # OnboardingService
 │   │   ├── dashboard/
-│   │   │   ├── home_dashboard.dart  # Premium dashboard + tooltip tour
-│   │   │   └── tour_data.dart       # 11-step tour content
+│   │   │   ├── dashboard_screen.dart # NEW premium dashboard (Home tab) + tooltip tour
+│   │   │   ├── home_dashboard.dart   # Original NFC dashboard (preserved, not used in Home tab)
+│   │   │   └── tour_data.dart        # 11-step tour content (steps 10-11 placeholder)
 │   │   └── shell/                   # Bottom navigation shell
-│   │       ├── main_shell.dart      # 5-tab navigation
+│   │       ├── main_shell.dart      # 5-tab navigation (Home = DashboardScreen)
 │   │       ├── wristbands_page.dart # Wristbands tab (placeholder)
 │   │       ├── teams_page.dart      # Teams tab (placeholder)
 │   │       ├── analytics_page.dart  # Analytics tab (placeholder)
@@ -42,12 +43,21 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 - **Database**: Cloud Firestore
 - **Authentication**: Firebase Auth (Google, Facebook, Email/Password)
 - **Hosting**: Python HTTP server on port 5000
+- **Typography**: Raleway 700 (headings), Montserrat 500 (buttons), Inter (body text)
+- **Brand Colors**: Blue #0075FD (primary), Orange #F75013 (accent)
 
 ## App Flow
 
 ### Navigation
 - **Bottom Navigation Bar** with 5 tabs: Home, Wristbands, Teams, Analytics, Account
 - No burger/drawer menu
+
+### Dashboard (Home Tab)
+- NEW screen: `dashboard_screen.dart` (replaces old HomeDashboard in Home tab)
+- Sections: Header greeting, Slot summary card, Recent activity (empty state), Support card
+- "Add new wristband" button visible only when slotsAvailable > 0
+- Orange pill badge "No slots available, buy more" when slotsAvailable == 0
+- Reads Firestore account data (READ ONLY)
 
 ### Onboarding (First Login Only) - Master V3 Logic
 1. **Step 1**: Welcome - Purchaser name (min 2 chars), initial slots (1-50 integer)
@@ -86,14 +96,15 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 - Server-side guard: transaction checks `slotsAvailable > 0` before incrementing
 
 ### First-Time Dashboard Tour (11 Steps)
-- Shows only on first dashboard open (per device)
+- Shows only on first dashboard open (per session currently; needs SharedPreferences for per-device)
 - Dark overlay (60% opacity) covers dashboard
 - Centered modal card with title, body, progress counter, Prev/Next buttons
-- Close (X) or Finish marks tour as completed via SharedPreferences
+- Close (X) or Finish marks tour as completed
 - Tour text centralized in `lib/features/dashboard/tour_data.dart`
-- Steps 10-11 use placeholder text (screenshots not provided yet)
+- Steps 1-9: exact text from screenshots
+- Steps 10-11: placeholder text (awaiting screenshots)
 
-### Core Actions (Unchanged)
+### Core Actions (in original HomeDashboard, preserved)
 - **View Slots**: Shows account/slot information from Firestore
 - **Write URL**: Programs NFC wristband with custom URL
 - **Clear URL**: Removes URL from NFC wristband
@@ -133,7 +144,8 @@ cd functions && npm install          # Cloud Functions dependencies
 - `lib/firebase/auth_services.dart` - Auth service
 - `lib/features/onboarding/data/onboarding_service.dart` - Onboarding persistence
 - `lib/features/shell/main_shell.dart` - Bottom navigation
-- `lib/features/dashboard/home_dashboard.dart` - Premium dashboard
+- `lib/features/dashboard/dashboard_screen.dart` - NEW premium dashboard
+- `lib/features/dashboard/home_dashboard.dart` - Original NFC dashboard (preserved)
 - `functions/shopify/orderPaid.js` - Webhook provisions users
 
 ## Notes

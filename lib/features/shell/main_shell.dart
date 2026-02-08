@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:cards/core/theme/app_theme.dart';
-import 'package:cards/features/dashboard/home_dashboard.dart';
+import 'package:cards/features/dashboard/dashboard_screen.dart';
 import 'package:cards/features/shell/wristbands_page.dart';
 import 'package:cards/features/shell/teams_page.dart';
 import 'package:cards/features/shell/analytics_page.dart';
@@ -19,7 +19,7 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   static const List<Widget> _pages = [
-    HomeDashboard(),
+    DashboardScreen(),
     WristbandsPage(),
     TeamsPage(),
     AnalyticsPage(),

@@ -51,14 +51,15 @@ const List<TourStep> dashboardTourSteps = [
     body:
         'Gamification features like the leaderboard and streak champions make performance fun and encourage friendly competition.',
   ),
+  // Steps 10-11: placeholder text — replace when screenshots are provided
   TourStep(
-    title: 'Need Help? We\'re Here!',
+    title: 'Placeholder Step 10',
     body:
-        'Access support resources, FAQs, and contact our team anytime from the dashboard. We\'re always here to help you succeed.',
+        'Placeholder body for step 10. Replace with final text when screenshot is provided.',
   ),
   TourStep(
-    title: 'You\'re All Set!',
+    title: 'Placeholder Step 11',
     body:
-        'That\'s the end of the tour. Explore your dashboard, manage your wristbands, and start growing your reviews today!',
+        'Placeholder body for step 11. Replace with final text when screenshot is provided.',
   ),
 ];

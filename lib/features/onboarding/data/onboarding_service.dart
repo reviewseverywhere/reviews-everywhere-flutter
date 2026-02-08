@@ -95,4 +95,59 @@ class OnboardingService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
+
+  Future<void> addWristbandAndIncrementSlot(OnboardingData data) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Not signed in');
+
+    final email = user.email?.trim().toLowerCase();
+    if (email == null || email.isEmpty) {
+      throw Exception('No email associated with account');
+    }
+
+    final q = await _db
+        .collection('accounts')
+        .where('shopifyEmail', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (q.docs.isEmpty) {
+      throw Exception('No account found for this email');
+    }
+
+    final docRef = q.docs.first.reference;
+
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) {
+        throw Exception('Account document not found');
+      }
+
+      final currentData = snapshot.data()!;
+      final slotsAvailable = _asInt(currentData['slotsAvailable']);
+      if (slotsAvailable <= 0) {
+        throw Exception('No slots available');
+      }
+
+      final existingOnboarding = currentData['onboardingData'] as Map<String, dynamic>? ?? {};
+      final existingWristbands = (existingOnboarding['wristbandNames'] as List<dynamic>?)?.cast<String>() ?? [];
+      final existingAssignments = (existingOnboarding['wristbandAssignments'] as Map<String, dynamic>?)?.cast<String, String?>() ?? {};
+
+      final mergedWristbands = [...existingWristbands, ...data.wristbandNames];
+      final mergedAssignments = {...existingAssignments, ...data.wristbandAssignments};
+
+      transaction.update(docRef, {
+        'slotsUsed': FieldValue.increment(1),
+        'onboardingData.wristbandNames': mergedWristbands,
+        'onboardingData.wristbandAssignments': mergedAssignments,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return 0;
+  }
 }

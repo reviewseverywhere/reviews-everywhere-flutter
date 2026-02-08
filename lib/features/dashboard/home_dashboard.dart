@@ -10,6 +10,7 @@ import 'package:cards/features/nfc_tag/presentation/viewmodels/home_view_model.d
 import 'package:cards/features/nfc_tag/presentation/pages/enter_url_page.dart';
 import 'package:cards/features/nfc_tag/presentation/widgets/validation_dialog.dart';
 import 'package:cards/features/nfc_tag/presentation/widgets/confirm_clear_dialog.dart';
+import 'package:cards/features/onboarding/presentation/pages/onboarding_page.dart';
 
 class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
@@ -168,6 +169,20 @@ class _HomeDashboardState extends State<HomeDashboard> {
         backgroundColor: AppColors.textPrimary,
       ),
     );
+  }
+
+  Future<void> _launchAddWristband() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const OnboardingPage(addWristbandMode: true),
+      ),
+    );
+
+    if (result == true && mounted) {
+      _loadAccountData();
+      _snack('Wristband added successfully!');
+    }
   }
 
   Future<void> _showEnterUrl() async {
@@ -465,6 +480,52 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.lg),
+          if (slotsAvailable > 0)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _launchAddWristband,
+                icon: const Icon(Icons.add_circle_outline, size: 20),
+                label: const Text('Add new wristband'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppColors.accentLight,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.info_outline, size: 18, color: AppColors.orange),
+                  const SizedBox(width: 8),
+                  Text(
+                    'No slots available, buy more',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

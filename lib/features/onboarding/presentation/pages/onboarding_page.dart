@@ -7,7 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class OnboardingPage extends StatefulWidget {
   static const routeName = '/onboarding';
-  const OnboardingPage({super.key});
+  final bool addWristbandMode;
+  const OnboardingPage({super.key, this.addWristbandMode = false});
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -45,10 +46,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
   List<TeamEditorData> _teams = [];
   Map<int, String?> _wristbandAssignments = {};
 
+  bool get _isAddMode => widget.addWristbandMode;
+
   @override
   void initState() {
     super.initState();
-    // Initialize with empty wristband list - will be populated from Step 1
     _wristbandControllers = [];
     _teams = [
       TeamEditorData(
@@ -60,12 +62,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
     ];
     
-    // Listen for changes to trigger validation
     _purchaserNameController.addListener(_onStep1Changed);
     _slotsController.addListener(_onStep1Changed);
     _gbpUrlController.addListener(_onStep4Changed);
     
-    // Load existing account data to prefill Step 1
+    if (_isAddMode) {
+      _maxWristbands = 1;
+      _slotsController.text = '1';
+      _wristbandControllers = [TextEditingController()];
+    }
+    
     _loadAccountData();
   }
   
@@ -163,12 +169,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
       }
       _debugSlotCountValue = '$slots (from $slotSource)';
       
-      // Prefill controllers
       if (purchaserName.isNotEmpty) {
         _purchaserNameController.text = purchaserName;
       }
-      _slotsController.text = slots.toString();
-      _maxWristbands = slots;
+      if (_isAddMode) {
+        _slotsController.text = '1';
+        _maxWristbands = 1;
+        if (_wristbandControllers.isEmpty) {
+          _wristbandControllers = [TextEditingController()];
+        }
+        final existingOnboarding = data['onboardingData'] as Map<String, dynamic>?;
+        if (existingOnboarding != null) {
+          final existingUrl = (existingOnboarding['gbpUrl'] ?? '').toString();
+          if (existingUrl.isNotEmpty) {
+            _gbpUrlController.text = existingUrl;
+          }
+        }
+      } else {
+        _slotsController.text = slots.toString();
+        _maxWristbands = slots;
+      }
       
       debugPrint('[Onboarding] Prefilled: name="$purchaserName", slots=$slots');
     } catch (e, st) {
@@ -486,8 +506,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         switch (_currentStep) {
           case 0:
             _step1Error = null;
-            // Store maxWristbands and sync wristband controllers
-            final newMaxWristbands = int.tryParse(_slotsController.text.trim()) ?? 10;
+            final newMaxWristbands = _isAddMode ? 1 : (int.tryParse(_slotsController.text.trim()) ?? 10);
             _maxWristbands = newMaxWristbands;
             
             // Sync wristband controllers to match maxWristbands
@@ -588,10 +607,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
         gbpUrl: _gbpUrlController.text.trim(),
       );
 
-      await OnboardingService().completeOnboarding(data);
+      if (_isAddMode) {
+        await OnboardingService().addWristbandAndIncrementSlot(data);
+      } else {
+        await OnboardingService().completeOnboarding(data);
+      }
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/main');
+        if (_isAddMode) {
+          Navigator.pop(context, true);
+        } else {
+          Navigator.pushReplacementNamed(context, '/main');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -698,10 +725,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Widget _buildStep1() {
     return _OnboardingCard(
-      title: 'Welcome & Initial Setup',
-      description: "Welcome! Let's get your Reviews Everywhere dashboard set up. We'll start with some basic information.",
+      title: _isAddMode ? 'Add New Wristband' : 'Welcome & Initial Setup',
+      description: _isAddMode
+          ? "You're adding a new wristband. Confirm your details below."
+          : "Welcome! Let's get your Reviews Everywhere dashboard set up. We'll start with some basic information.",
       children: [
-        // ========== TEMPORARY DEBUG CARD (REMOVE AFTER VERIFICATION) ==========
         if (kDebugMode) Container(
           width: double.infinity,
           margin: const EdgeInsets.only(bottom: 16),
@@ -784,15 +812,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
             label: 'Your Name (Purchaser)',
             hint: 'e.g., Jane Doe',
             controller: _purchaserNameController,
+            readOnly: _isAddMode,
           ),
           const SizedBox(height: AppSpacing.lg),
-          _PremiumInputField(
-            label: 'Number of Initial Wristband Slots',
-            hint: '10',
-            controller: _slotsController,
-            keyboardType: TextInputType.number,
-            helperText: "This determines how many wristband inputs you'll start with (1-50). You can use fewer than your purchased total.",
-          ),
+          if (_isAddMode) ...[
+            _PremiumInputField(
+              label: 'Wristbands to Add',
+              hint: '1',
+              controller: _slotsController,
+              keyboardType: TextInputType.number,
+              readOnly: true,
+              helperText: 'Adding 1 new wristband. This will use 1 available slot.',
+            ),
+          ] else ...[
+            _PremiumInputField(
+              label: 'Number of Initial Wristband Slots',
+              hint: '10',
+              controller: _slotsController,
+              keyboardType: TextInputType.number,
+              helperText: "This determines how many wristband inputs you'll start with (1-50). You can use fewer than your purchased total.",
+            ),
+          ],
           // Show inline error if present
           if (_step1Error != null) ...[
             const SizedBox(height: 16),
@@ -808,8 +848,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final canRemove = _wristbandControllers.length > 1;
     
     return _OnboardingCard(
-      title: 'Define Your Wristbands',
-      description: "Now, give your wristbands custom names. These will help you identify them easily later. Each wristband starts unassigned.",
+      title: _isAddMode ? 'Name Your Wristband' : 'Define Your Wristbands',
+      description: _isAddMode
+          ? "Give your new wristband a name to identify it."
+          : "Now, give your wristbands custom names. These will help you identify them easily later. Each wristband starts unassigned.",
       children: [
         // Show count indicator
         Container(

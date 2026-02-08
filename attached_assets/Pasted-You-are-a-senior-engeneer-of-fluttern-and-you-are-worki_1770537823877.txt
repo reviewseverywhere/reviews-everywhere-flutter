@@ -1,0 +1,46 @@
+You are a senior engeneer of fluttern, and you are working inside an existing Flutter app. Implement ONLY this feature and do not change anything else.
+
+GOAL
+Add an “Add new wristband” button in the dashboard that is visible ONLY when the current user has slotsAvailable > 0. When the user completes the existing onboarding flow for one wristband, increment slotsUsed by 1 in Firestore. Do NOT use Shopify order numbers for mapping. Do NOT touch entitlements, webhooks, refunds, or cloud functions.
+
+REQUIREMENTS
+1) Dashboard UI
+- Read the current user document (same source already used for slotsPurchasedTotal, slotsUsed, slotsAvailable or similar).
+- If slotsAvailable > 0:
+  - Show a clear primary button labeled exactly: Add new wristband
+- If slotsAvailable == 0:
+  - Do NOT show the button.
+  - Show a short message: No slots available, buy more
+
+2) Start flow
+- On button tap, start the EXISTING onboarding flow used to create/map a wristband.
+- Reuse the same screens and logic, do not create a second onboarding or a new separate flow.
+- The flow must create exactly ONE new wristband asset.
+
+3) Slot consumption
+- When the onboarding flow finishes successfully (wristband asset created/mapped and saved):
+  - Update Firestore for the current user:
+    - slotsUsed = slotsUsed + 1
+  - Use an atomic increment (transaction or FieldValue.increment(1)) to avoid race conditions.
+- If the flow is cancelled or fails:
+  - Do not increment slotsUsed.
+
+4) Data integrity and scope
+- Do not rely on order number, order id, line item id, or variant info for this feature.
+- Do not change how slotsPurchasedTotal is calculated.
+- Only read slotsAvailable and write slotsUsed.
+
+DELIVERABLE
+- Provide a full-file replacement for each file you modify (no partial snippets).
+- List the filenames you changed.
+- Include a short manual test checklist:
+  - slotsAvailable > 0 shows the button
+  - completing onboarding increments slotsUsed by 1
+  - slotsAvailable decreases by 1 accordingly in UI
+  - cancelling does not change slotsUsed
+
+IMPORTANT
+- Keep all existing styles and navigation patterns.
+- Do not add debug UI.
+- Do not refactor unrelated code.
+```

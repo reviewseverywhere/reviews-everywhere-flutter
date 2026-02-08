@@ -73,6 +73,15 @@ A Flutter web application with Firebase integration for NFC tag management. Feat
 - Clicking shows snackbar + inline error with specific message
 - Real-time validation updates as user types
 
+### Add New Wristband (Dashboard)
+- **Button visible** only when `slotsAvailable > 0`
+- **Message shown** "No slots available, buy more" when `slotsAvailable == 0`
+- Launches existing onboarding flow in `addWristbandMode` (locked to 1 wristband)
+- On completion: atomically increments `slotsUsed` by 1 via Firestore transaction
+- New wristband names + assignments merged into existing `onboardingData`
+- Cancel/back does NOT change `slotsUsed`
+- Server-side guard: transaction checks `slotsAvailable > 0` before incrementing
+
 ### Core Actions (Unchanged)
 - **View Slots**: Shows account/slot information from Firestore
 - **Write URL**: Programs NFC wristband with custom URL

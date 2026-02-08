@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "swift-5.8", "python-3.11", "flutter"]
+modules = ["nodejs-20", "swift-5.8", "python-3.11", "flutter", "dart"]
 [agent]
 expertMode = true
 

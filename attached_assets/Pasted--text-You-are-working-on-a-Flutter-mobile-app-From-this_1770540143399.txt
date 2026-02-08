@@ -1,0 +1,132 @@
+```text
+You are working on a Flutter mobile app. From this point, assume the DASHBOARD does NOT exist yet and must be built from scratch (code + design). You must NOT delete, remove, or break anything that already works today (auth, routing, onboarding, backend, entitlements). Do NOT refactor unrelated code. Add new code cleanly and safely.
+
+ABSOLUTE PRIORITIES
+1) Create a NEW Dashboard screen as the post-login landing screen, built from zero UI, following the brand identity and design system below.
+2) Implement a first-time-only onboarding tooltip tour (11 steps) shown over the dashboard with a dark overlay and a centered modal card (same behavior as the screenshot).
+3) Keep tooltip TEXT CONTENT exactly as provided by the prototype screenshots (text only). Do NOT copy prototype design. Our design system rules override.
+4) At the very end, remove only the old temporary debug logs in the Cloud Function orderPaid that were used to verify bundle units. Do not change entitlement logic.
+
+DO NOT
+- Do not delete any existing files or screens.
+- Do not remove any existing routes or flows.
+- Do not rename existing classes/paths unless strictly necessary.
+- Do not implement web-style UI.
+- Do not invent tooltip text. Use exactly what is provided.
+- Do not change entitlements math, refunds logic, or Shopify webhook behavior (except removing old temporary debug logs at the end).
+
+BRAND COLORS
+- Primary Blue: #0075FD
+- Accent Orange: #F75013
+Rules:
+- Blue for primary actions.
+- Orange only for accents, highlights, destructive states, and key badges.
+- Never use purple.
+
+DESIGN DIRECTION
+Premium mobile SaaS + modern iOS/Android feel.
+High contrast, clean spacing, soft depth, tasteful gradients, strong hierarchy.
+
+DESIGN SYSTEM SPEC (implement in a dedicated theme file + reusable widgets, without breaking current app theme)
+A) Surfaces
+- App background: very light gradient, top #EAF3FF fading to #FFFFFF bottom.
+- Cards: pure white, soft shadow, large radius.
+- Radii: 20 for main cards, 16 for inputs, 999 for pill badges/buttons.
+- Shadows: subtle but visible, two-layer, low opacity. No harsh borders.
+
+B) Typography
+- Screen title: 28-32, bold, near-black #0B1220.
+- Subtitle: 14-16, medium, cool gray #5B677A.
+- Section labels: 12-13, semibold or uppercase, gray #6B7688.
+- Input text: 16.
+- Button text: 16-17 semibold.
+
+C) Buttons
+- Primary: full width, height 52-56, radius 999, solid Blue, white text, subtle shadow.
+- Secondary: outline Blue, transparent bg, same height/radius.
+- Destructive: Orange background or Orange outline depending context.
+- Add buttons: Blue outline with plus icon in Blue.
+- Disabled: reduce opacity and remove shadow.
+
+D) Inputs
+- Filled input style: fill #F4F7FB, Blue focus border.
+- Label above input (not placeholder-only).
+- Helper text small gray.
+- Error text Orange with small icon.
+
+DATA (READ ONLY)
+The dashboard reads the signed-in account document from Firestore (existing structure), including:
+- displayName (or firstName fallback)
+- slotsPurchasedTotal
+- slotsUsed
+- slotsAvailable
+Do not change database structure. Only read and render.
+
+DASHBOARD REQUIREMENTS (V1)
+Create a NEW dashboard screen with these sections (keep it clean and premium):
+1) Header
+- Large greeting title: “Hi, {name}”
+- Small subtitle under it (short supportive line)
+2) Slot summary card (main)
+- Show slotsAvailable prominently (large number)
+- Secondary row: Purchased, Used (and Refunded only if the field exists)
+- Primary action button: “Add new wristband”
+  - Visible only if slotsAvailable > 0
+  - If slotsAvailable == 0: hide the button and show an orange pill badge: “No slots available, buy more”
+IMPORTANT about the button:
+- If an existing onboarding flow for adding a wristband already exists and is safe to reuse, wire it.
+- If it does NOT exist yet, wire the button to a safe placeholder route/screen that simply says “Coming soon” (premium styled), so we do not break the app. Do NOT implement the whole add-wristband logic in this prompt unless it is already present and stable.
+3) Recent activity card (placeholder, no fake data)
+- Title: “Recent activity”
+- If no data source exists, show a clean empty state message.
+4) Support card
+- One simple action button (stub is OK): “Contact support”
+
+ROUTING
+- After successful login, navigate to this NEW Dashboard screen.
+- Do not remove or replace any existing screens. Add the dashboard route and update only the post-login destination safely.
+
+FIRST-TIME TOOLTIP TOUR (11 steps)
+Behavior:
+- Show ONLY on the first dashboard open (per device).
+- Dark overlay covers the dashboard behind it (opacity ~0.55-0.65).
+- Centered modal card with:
+  - Title
+  - Body
+  - Progress “1 / 11”
+  - Primary button “Next” (last step: “Finish”)
+  - Close “X” top-right
+- Next advances steps.
+- Close or Finish marks tour as completed and never shows again.
+Persistence:
+- Use SharedPreferences (or existing local storage in the app) to store a boolean like “dashboardTourCompleted=true”.
+
+TEXT SOURCE
+- I will upload 11 tooltip screenshots.
+- Extract the text exactly and implement the 11 steps accordingly.
+- Implement the tour system now using a single centralized list (one file) so swapping the placeholder strings for final text is trivial.
+- As soon as the 11 screenshots are available in the project, replace placeholders with exact text.
+
+REUSABLE UI COMPONENTS (NEW, DO NOT BREAK EXISTING)
+Create new reusable widgets/files (do not rewrite existing ones):
+- GradientBackgroundScaffold
+- PremiumCard
+- PrimaryButton / SecondaryButton
+- PillBadge
+- PremiumTourModal (modal card for the tooltip)
+Use the design system values above.
+
+DELIVERABLE
+- Provide full-file replacements for every file you change.
+- List all changed/new files.
+
+FINAL STEP: REMOVE OLD TEMP DEBUG LOGS (BACKEND, DO NOT CHANGE LOGIC)
+After the dashboard + tour are done:
+- In the Cloud Function that handles order paid (orderPaid handler), remove ONLY the old temporary debug logs that print per-line-item details like:
+  “[orderPaid] lineItem: title=..., variant=..., qty=..., unitsPerBundle=..., units=...”
+- Keep the final summary log line (orderId/customerId/totalUnits) if it is still useful, and keep error logs.
+- Do not change entitlement calculations, fallbacks, refunds behavior, or any mapping logic.
+
+QUALITY BAR
+This must look and feel like a premium mobile app. Strong spacing, clean hierarchy, soft depth. No clutter. No web form look.
+```
